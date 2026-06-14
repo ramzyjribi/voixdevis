@@ -3,7 +3,7 @@
 Derniere mise a jour: 2026-06-14  
 Source de planification: `docs/PLAN.md`  
 Architecture de reference: `docs/ARCHITECTURE.md`  
-Statut global: Phase 1 terminee, Phase 2 en attente de validation utilisateur
+Statut global: Phase 2 terminee, Phase 3 en attente de validation utilisateur
 
 ## 1. Reprise rapide
 
@@ -18,17 +18,20 @@ Statut global: Phase 1 terminee, Phase 2 en attente de validation utilisateur
 - La Phase 0 est terminee: guides Next.js locaux relus, tools officiels confirmes, scope plomberie confirme, `npm` confirme.
 - La Phase 1 est terminee: dependances `zustand` et `zod` installees, types domaine/tools crees, helpers catalogue/templates crees, calculs financiers centralises crees, generateurs d'IDs crees, store Zustand persistant cree, actions devis locales implementees et tests domaine ajoutes.
 - Les controles Phase 1 passent: `npm.cmd run test:domain`, `npm.cmd run lint`, `npm.cmd run build`.
-- La Phase 2 ne doit pas etre demarree sans validation utilisateur explicite.
+- La Phase 2 est terminee: `lucide-react` installe, shadcn/ui initialise, composants UI requis ajoutes, AppShell responsive cree, rendu devis professionnel cree, ajout manuel article/template/ligne libre branche, edition/suppression de lignes et sections branchee, parametres entreprise persistants crees, bouton Nouveau devis branche.
+- Les controles Phase 2 passent: `npm.cmd run test:domain`, `npm.cmd run lint`, `npm.cmd run build`.
+- Verification navigateur effectuee sur `http://localhost:3001` avec `next start`: chargement desktop, ajout article, edition quantite, totaux, parametres entreprise et onglet mobile Devis valides.
+- La Phase 3 ne doit pas etre demarree sans validation utilisateur explicite.
 
 ### Prochaine action recommandee
 
-Attendre la validation utilisateur avant de demarrer la Phase 2 de `docs/PLAN.md`.
+Attendre la validation utilisateur avant de demarrer la Phase 3 de `docs/PLAN.md`.
 
 Si validation recue:
 
 1. Lire les guides Next.js locaux pertinents avant toute modification d'UI.
-2. Installer `lucide-react`.
-3. Initialiser shadcn/ui selon la documentation officielle.
+2. Creer le panneau conversation et le composer texte.
+3. Ajouter la dictee assistee via `hooks/useSpeechRecognition.ts` sans declenchement Gemini automatique.
 
 
 ### Commandes de controle utiles
@@ -46,8 +49,8 @@ Ces commandes deviendront surtout utiles a partir des phases de code. Pour l'ins
 |---:|---|---|---:|---|---|
 | 0 | Preparation du socle projet | Terminee | 100% | Rien | Aucune |
 | 1 | Fondations domaine et store | Terminee | 100% | Rien | Aucune |
-| 2 | UI devis, edition et parametres | Non demarree | 0% | Validation utilisateur | Attendre validation avant de construire l'AppShell et le rendu devis |
-| 3 | Conversation texte et dictee assistee | Non demarree | 0% | Phase 2 | Creer chat, composer et hook Web Speech |
+| 2 | UI devis, edition et parametres | Terminee | 100% | Rien | Aucune |
+| 3 | Conversation texte et dictee assistee | Non demarree | 0% | Validation utilisateur | Attendre validation avant de creer chat, composer et hook Web Speech |
 | 4 | Gemini Function Calling | Non demarree | 0% | Phases 1 et 3 | Creer tools, promptBuilder, route `/api/ai` |
 | 5 | Clarifications et edge cases metier | Non demarree | 0% | Phase 4 | Implementer `request_clarification` et actions edge |
 | 6 | Export PDF | Non demarree | 0% | Phases 1, 2 et 5 | Ajouter `@react-pdf/renderer` et le document PDF |
@@ -98,19 +101,19 @@ Resultat attendu: moteur de devis local testable sans UI finale, Gemini ni PDF.
 
 ### Phase 2 - UI devis, edition manuelle et parametres
 
-Statut: Non demarree
+Statut: Terminee
 
-- [ ] Installer `lucide-react`.
-- [ ] Initialiser shadcn/ui selon la documentation officielle.
-- [ ] Ajouter les composants UI shadcn necessaires.
-- [ ] Remplacer la page starter par l'AppShell.
-- [ ] Construire le split desktop et les onglets mobile.
-- [ ] Construire le rendu devis.
-- [ ] Ajouter l'edition manuelle des lignes.
-- [ ] Ajouter les parametres entreprise persistants.
-- [ ] Ajouter le bouton Nouveau devis.
-- [ ] Tester responsive, edition, suppression et persistence.
-- [ ] Valider les criteres d'acceptation de la Phase 2 dans `docs/PLAN.md`.
+- [x] Installer `lucide-react`.
+- [x] Initialiser shadcn/ui selon la documentation officielle.
+- [x] Ajouter les composants UI shadcn necessaires.
+- [x] Remplacer la page starter par l'AppShell.
+- [x] Construire le split desktop et les onglets mobile.
+- [x] Construire le rendu devis.
+- [x] Ajouter l'edition manuelle des lignes.
+- [x] Ajouter les parametres entreprise persistants.
+- [x] Ajouter le bouton Nouveau devis.
+- [x] Tester responsive, edition, suppression et persistence.
+- [x] Valider les criteres d'acceptation de la Phase 2 dans `docs/PLAN.md`.
 
 Resultat attendu: application locale utilisable sans IA.
 
@@ -228,6 +231,7 @@ Resultat attendu: MVP stable, testable et demonstrable.
 | LocalStorage | Donnees corrompues ou schema ancien | Versionner la persistence en Phase 1 |
 | UI/PDF | Totaux divergents | Reutiliser les selectors de calcul en Phase 6 |
 | Reset devis | Action destructive | Prevoir une UX claire en Phase 5 |
+| `next dev` local | Echec possible sur lockfile `.next` selon permissions Windows | Utiliser `npm.cmd run build` puis `npm.cmd run start -- --port 3001` pour verification navigateur si besoin |
 
 ## 6. Known Issues
 
@@ -240,6 +244,7 @@ Problemes concrets deja identifies, a surveiller pendant l'implementation.
 | La Web Speech API peut dependre du reseau/service navigateur | Transcription lente ou instable en conditions chantier | 3 | Ouvert |
 | Le reset devis est une action destructive | Perte de travail utilisateur si declenchement accidentel | 5 | Ouvert |
 | Gemini peut proposer des IDs invalides ou ambigus | Devis incoherent si validation insuffisante | 4 | Ouvert |
+| `next dev` peut echouer avec `Access is denied` lors de l'acquisition du lockfile `.next` | Verification dev server bloquee dans ce worktree | 2 | Ouvert |
 
 ## 7. Technical Debt
 
@@ -268,6 +273,7 @@ Compromis acceptes pour le MVP, non bloquants maintenant mais a suivre apres sta
 | 2026-06-14 | Documentation | Ajout du workflow de session dans `AGENTS.md` | Les prochaines sessions savent lire et mettre a jour `STATUS.md` | Demarrer Phase 1 |
 | 2026-06-14 | Documentation | Ajout des regles UI, TypeScript, Zod et qualite dans `AGENTS.md` | Les prochaines implementations ont des garde-fous techniques et UI | Demarrer Phase 1 |
 | 2026-06-14 | Phase 1 | Installation de `zustand` et `zod`, creation du domaine devis, des validations, du store persistant et des tests domaine | Phase 1 terminee, controles `test:domain`, `lint` et `build` passes | Attendre validation utilisateur pour Phase 2 |
+| 2026-06-14 | Phase 2 | Initialisation shadcn/ui, creation AppShell responsive, rendu devis, parametres entreprise, ajout manuel, edition et suppression | Phase 2 terminee, controles `test:domain`, `lint`, `build` et verification navigateur passes | Attendre validation utilisateur pour Phase 3 |
 
 ## 9. Comment mettre a jour ce fichier
 
@@ -305,7 +311,7 @@ Statuts autorises pour les phases:
 
 Reprendre ici:
 
-- Phase: 2 - UI devis, edition manuelle et parametres
+- Phase: 3 - Conversation texte et dictee assistee
 - Statut: Non demarree, en attente de validation utilisateur
-- Premiere action: apres validation explicite, relire les guides Next.js locaux pertinents puis installer `lucide-react` et initialiser shadcn/ui
+- Premiere action: apres validation explicite, relire les guides Next.js locaux pertinents puis creer le panneau conversation, le composer texte et `hooks/useSpeechRecognition.ts`
 - Fichier de reference principal: `docs/PLAN.md`
