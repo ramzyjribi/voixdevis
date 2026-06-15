@@ -61,16 +61,19 @@ const resolveSpeechRecognition = (): SpeechRecognitionConstructor | null => {
 
 export function useSpeechRecognition() {
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  const [isSupported, setIsSupported] = useState(() =>
-    Boolean(resolveSpeechRecognition()),
-  );
+  const [isSupported, setIsSupported] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const supportCheckId = window.setTimeout(() => {
+      setIsSupported(Boolean(resolveSpeechRecognition()));
+    }, 0);
+
     return () => {
+      window.clearTimeout(supportCheckId);
       recognitionRef.current?.abort();
       recognitionRef.current = null;
     };

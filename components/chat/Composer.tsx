@@ -2,14 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useAiConversation } from "@/hooks/useAiConversation";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useQuoteStore } from "@/store/useQuoteStore";
 import { SendHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { VoiceRecorder } from "./VoiceRecorder";
-
-const LOCAL_ASSISTANT_REPLY = "Message recu.";
 
 const mergeDictation = (current: string, dictatedText: string): string => {
   const trimmedCurrent = current.trimEnd();
@@ -26,12 +25,9 @@ const mergeDictation = (current: string, dictatedText: string): string => {
 
 export function Composer() {
   const [text, setText] = useState("");
-  const pendingTimeoutRef = useRef<number | null>(null);
   const lastTranscriptRef = useRef("");
-  const addUserMessage = useQuoteStore((state) => state.addUserMessage);
-  const addAssistantMessage = useQuoteStore((state) => state.addAssistantMessage);
-  const setProcessing = useQuoteStore((state) => state.setProcessing);
   const setLiveTranscript = useQuoteStore((state) => state.setLiveTranscript);
+  const { isSending, sendMessage } = useAiConversation();
   const {
     isSupported,
     isListening,
@@ -62,45 +58,35 @@ export function Composer() {
 
   useEffect(
     () => () => {
-      if (pendingTimeoutRef.current) {
-        window.clearTimeout(pendingTimeoutRef.current);
-      }
       setLiveTranscript("");
     },
     [setLiveTranscript],
   );
 
-  const sendMessage = () => {
+  const submitMessage = () => {
     const content = text.trim();
 
-    if (!content) {
+    if (!content || isSending) {
       return;
     }
 
     stop();
     reset();
     lastTranscriptRef.current = "";
-    addUserMessage(content);
     setText("");
     setLiveTranscript("");
-    setProcessing(true);
-
-    pendingTimeoutRef.current = window.setTimeout(() => {
-      addAssistantMessage(LOCAL_ASSISTANT_REPLY);
-      setProcessing(false);
-      pendingTimeoutRef.current = null;
-    }, 450);
+    void sendMessage(content);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    sendMessage();
+    submitMessage();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      sendMessage();
+      submitMessage();
     }
   };
 
@@ -131,7 +117,7 @@ export function Composer() {
           type="submit"
           size="icon-lg"
           aria-label="Envoyer"
-          disabled={!text.trim()}
+          disabled={!text.trim() || isSending}
         >
           <SendHorizontal />
         </Button>

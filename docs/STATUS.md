@@ -3,7 +3,7 @@
 Derniere mise a jour: 2026-06-15  
 Source de planification: `docs/PLAN.md`  
 Architecture de reference: `docs/ARCHITECTURE.md`  
-Statut global: Phase 3 terminee, Phase 4 en attente de validation utilisateur
+Statut global: Phase 4 terminee cote implementation, Phase 5 en attente de validation utilisateur
 
 ## 1. Reprise rapide
 
@@ -22,23 +22,30 @@ Statut global: Phase 3 terminee, Phase 4 en attente de validation utilisateur
 - Les controles Phase 2 passent: `npm.cmd run test:domain`, `npm.cmd run lint`, `npm.cmd run build`.
 - Verification navigateur effectuee sur `http://localhost:3001` avec `next start`: chargement desktop, ajout article, edition quantite, totaux, parametres entreprise et onglet mobile Devis valides.
 - La Phase 3 est terminee: panneau conversation cree, liste de messages creee, composer texte branche, bouton micro branche, hook `hooks/useSpeechRecognition.ts` implemente, transcription live affichee et fallback texte conserve.
-- La conversation Phase 3 reste volontairement locale: aucun appel Gemini, aucune mutation devis automatique par la voix, reponse assistant simulee courte apres envoi manuel.
+- La Phase 3 a valide le flux texte-first avant branchement Gemini: la voix remplit le champ et l'utilisateur envoie explicitement.
 - Le bouton Nouveau devis repart sur une conversation propre avec un greeting local.
 - Les outils manuels client/lignes restent accessibles depuis le panneau lateral de la conversation.
 - Les controles Phase 3 passent: `npm.cmd run test:domain`, `npm.cmd run lint`, `npm.cmd run build`.
+- Correctif post-Phase 3 applique: la detection Web Speech est maintenant faite apres hydratation navigateur pour eviter un bouton micro bloque a `disabled` apres prerendu Next.
 - Verification navigateur automatisee limitee: `next start` repond en HTTP sur `127.0.0.1:3002` depuis le shell, mais le navigateur integre Codex a refuse la connexion locale pendant cette session.
-- La Phase 4 ne doit pas etre demarree sans validation utilisateur explicite.
+- La Phase 4 est terminee cote implementation: SDK `@google/genai` installe, declarations tools creees, prompt builder cree, adapter serveur cree, route `POST /api/ai` creee, hook client branche et executor local valide.
+- Le composer n'utilise plus la reponse locale simulee: l'envoi explicite appelle `/api/ai`, puis les tool calls valides sont appliques par le store.
+- La cle Gemini reste cote serveur via `GEMINI_API_KEY`; `GEMINI_MODEL` permet de choisir le modele sans modifier le code.
+- L'executor refuse les `articleId`, `templateId`, `lineItemId` et sections inconnus sans corrompre le devis; `reset_quote` reste refuse sans confirmation jusqu'a la Phase 5.
+- Les controles Phase 4 passent: `npm.cmd run test:domain`, `npm.cmd run lint`, `npm.cmd run build`.
+- Verification locale Phase 4: sans `GEMINI_API_KEY`, `POST /api/ai` retourne bien l'erreur courte `Cle Gemini manquante.`.
+- La Phase 5 ne doit pas etre demarree sans validation utilisateur explicite.
 
 ### Prochaine action recommandee
 
-Attendre la validation utilisateur avant de demarrer la Phase 4 de `docs/PLAN.md`.
+Attendre la validation utilisateur avant de demarrer la Phase 5 de `docs/PLAN.md`.
 
 Si validation recue:
 
-1. Verifier la documentation officielle Gemini courante.
-2. Creer les tools Gemini, le prompt builder et l'adapter serveur.
-3. Creer la route `POST /api/ai` et le hook client de conversation IA.
-4. Brancher l'execution des tool calls valides sans jamais donner l'etat du devis a Gemini.
+1. Implementer l'UX de clarification avec `request_clarification`.
+2. Creer les actions de choix candidat sans confier la mutation a Gemini.
+3. Implementer les edge cases Phase 5: reset confirme, questions, hors scope et suppression robuste.
+4. Tester les ambiguites et les commandes limites sans corrompre le devis.
 
 
 ### Commandes de controle utiles
@@ -46,9 +53,10 @@ Si validation recue:
 ```bash
 npm run lint
 npm run build
+npm run test:domain
 ```
 
-Ces commandes deviendront surtout utiles a partir des phases de code. Pour l'instant, le travail realise est documentaire.
+`npm.cmd run build` peut demander un acces reseau hors sandbox pour recuperer les polices Google utilisees par `next/font`.
 
 ## 2. Progression des phases
 
@@ -58,8 +66,8 @@ Ces commandes deviendront surtout utiles a partir des phases de code. Pour l'ins
 | 1 | Fondations domaine et store | Terminee | 100% | Rien | Aucune |
 | 2 | UI devis, edition et parametres | Terminee | 100% | Rien | Aucune |
 | 3 | Conversation texte et dictee assistee | Terminee | 100% | Rien | Aucune |
-| 4 | Gemini Function Calling | Non demarree | 0% | Validation utilisateur | Attendre validation avant de creer tools, promptBuilder, route `/api/ai` |
-| 5 | Clarifications et edge cases metier | Non demarree | 0% | Phase 4 | Implementer `request_clarification` et actions edge |
+| 4 | Gemini Function Calling | Terminee | 100% | Rien | Aucune |
+| 5 | Clarifications et edge cases metier | Non demarree | 0% | Validation utilisateur | Attendre validation avant d'implementer `request_clarification` et les actions edge |
 | 6 | Export PDF | Non demarree | 0% | Phases 1, 2 et 5 | Ajouter `@react-pdf/renderer` et le document PDF |
 | 7 | Durcissement, QA et polish MVP | Non demarree | 0% | Phases 0 a 6 | Ajouter tests et verifier lint/build |
 
@@ -143,19 +151,19 @@ Resultat attendu: saisie conversationnelle controlee, prete a etre connectee a G
 
 ### Phase 4 - Gemini Function Calling
 
-Statut: Non demarree
+Statut: Terminee
 
-- [ ] Verifier la documentation officielle Gemini au moment de l'implementation.
-- [ ] Installer le SDK Gemini officiel courant, probablement `@google/genai`.
-- [ ] Ajouter les variables `GEMINI_API_KEY` et `GEMINI_MODEL`.
-- [ ] Creer `ai/tools.ts`.
-- [ ] Creer `ai/promptBuilder.ts`.
-- [ ] Creer `ai/geminiClient.ts`.
-- [ ] Creer `app/api/ai/route.ts`.
-- [ ] Creer `hooks/useAiConversation.ts`.
-- [ ] Creer ou finaliser `domain/toolExecutor.ts`.
-- [ ] Tester les fixtures Gemini sans appel reseau.
-- [ ] Valider les criteres d'acceptation de la Phase 4 dans `docs/PLAN.md`.
+- [x] Verifier la documentation officielle Gemini au moment de l'implementation.
+- [x] Installer le SDK Gemini officiel courant, `@google/genai`.
+- [x] Ajouter le support runtime des variables `GEMINI_API_KEY` et `GEMINI_MODEL`.
+- [x] Creer `ai/tools.ts`.
+- [x] Creer `ai/promptBuilder.ts`.
+- [x] Creer `ai/geminiClient.ts`.
+- [x] Creer `app/api/ai/route.ts`.
+- [x] Creer `hooks/useAiConversation.ts`.
+- [x] Creer ou finaliser `domain/toolExecutor.ts`.
+- [x] Tester les fixtures Gemini sans appel reseau.
+- [x] Valider les criteres d'acceptation de la Phase 4 dans `docs/PLAN.md`.
 
 Resultat attendu: l'IA peut modifier le devis via tool calls valides et executes cote application.
 
@@ -238,7 +246,8 @@ Resultat attendu: MVP stable, testable et demonstrable.
 | LocalStorage | Donnees corrompues ou schema ancien | Versionner la persistence en Phase 1 |
 | UI/PDF | Totaux divergents | Reutiliser les selectors de calcul en Phase 6 |
 | Reset devis | Action destructive | Prevoir une UX claire en Phase 5 |
-| `next dev` local | Echec possible sur lockfile `.next` selon permissions Windows | Utiliser `npm.cmd run build` puis `npm.cmd run start -- --port 3001` pour verification navigateur si besoin |
+| `next dev` local | Echec possible sur lockfile `.next` selon permissions Windows | Utiliser `npm.cmd run build` ou lancer `next dev` au premier plan pour verification ciblee |
+| `GEMINI_API_KEY` absente | La route IA retourne 503 au lieu d'appeler Gemini | Renseigner la variable avant une verification live Gemini |
 
 ## 6. Known Issues
 
@@ -250,9 +259,11 @@ Problemes concrets deja identifies, a surveiller pendant l'implementation.
 | Web Speech API dependante de Chrome et du support navigateur | La voix peut etre indisponible chez certains utilisateurs | 3 | Ouvert |
 | La Web Speech API peut dependre du reseau/service navigateur | Transcription lente ou instable en conditions chantier | 3 | Ouvert |
 | Le navigateur integre Codex peut refuser l'acces a `127.0.0.1:3002` alors que le shell recoit HTTP 200 | Verification interactive automatisee limitee dans cette session | 3 | Ouvert |
+| Le bouton micro pouvait rester desactive apres prerendu Next car le support Web Speech etait detecte trop tot | Dictée indisponible meme dans Chrome compatible | 3 | Resolu |
 | Le reset devis est une action destructive | Perte de travail utilisateur si declenchement accidentel | 5 | Ouvert |
 | Gemini peut proposer des IDs invalides ou ambigus | Devis incoherent si validation insuffisante | 4 | Ouvert |
 | `next dev` peut echouer avec `Access is denied` lors de l'acquisition du lockfile `.next` | Verification dev server bloquee dans ce worktree | 2 | Ouvert |
+| `GEMINI_API_KEY` n'est pas renseignee dans cette session | Verification live Gemini impossible, mais erreur courte validee | 4 | Ouvert |
 
 ## 7. Technical Debt
 
@@ -267,6 +278,7 @@ Compromis acceptes pour le MVP, non bloquants maintenant mais a suivre apres sta
 | Tests e2e Playwright repousses | D'abord stabiliser domaine, UI et IA mockee | Ajouter apres Phase 7 si besoin demo robuste |
 | `answer_question` depend du contexte injecte a Gemini | Acceptable si les totaux calcules sont fournis par l'app | Reponses calculees par l'app puis formulees par IA |
 | Catalogue limite a la plomberie | Scope MVP clair | Extension multi-metiers |
+| `reset_quote` est valide comme tool call mais refuse sans confirmation | Evite une suppression destructive avant l'UX Phase 5 | Brancher la confirmation en Phase 5 |
 
 ## 8. Journal de progression
 
@@ -283,6 +295,8 @@ Compromis acceptes pour le MVP, non bloquants maintenant mais a suivre apres sta
 | 2026-06-14 | Phase 1 | Installation de `zustand` et `zod`, creation du domaine devis, des validations, du store persistant et des tests domaine | Phase 1 terminee, controles `test:domain`, `lint` et `build` passes | Attendre validation utilisateur pour Phase 2 |
 | 2026-06-14 | Phase 2 | Initialisation shadcn/ui, creation AppShell responsive, rendu devis, parametres entreprise, ajout manuel, edition et suppression | Phase 2 terminee, controles `test:domain`, `lint`, `build` et verification navigateur passes | Attendre validation utilisateur pour Phase 3 |
 | 2026-06-15 | Phase 3 | Creation du panneau conversation, messages, composer texte, bouton micro, hook Web Speech et reponse assistant locale | Phase 3 terminee, controles `test:domain`, `lint` et `build` passes; navigateur integre bloque sur localhost | Attendre validation utilisateur pour Phase 4 |
+| 2026-06-15 | Phase 3 | Correction de la detection Web Speech apres hydratation navigateur | Bouton micro debloquable dans les navigateurs compatibles; controles `test:domain`, `lint` et `build` passes | Tester dans Chrome ou Edge sur `http://localhost:3003/` |
+| 2026-06-15 | Phase 4 | Installation `@google/genai`, creation tools Gemini, prompt builder, adapter serveur, route `/api/ai`, hook client et executor valide | Phase 4 terminee cote implementation; controles `test:domain`, `lint`, `build` passes; erreur courte sans cle Gemini validee | Attendre validation utilisateur pour Phase 5 |
 
 ## 9. Comment mettre a jour ce fichier
 
@@ -320,7 +334,7 @@ Statuts autorises pour les phases:
 
 Reprendre ici:
 
-- Phase: 4 - Gemini Function Calling
+- Phase: 5 - Clarifications et edge cases metier
 - Statut: Non demarree, en attente de validation utilisateur
-- Premiere action: apres validation explicite, verifier la documentation officielle Gemini courante puis creer les tools, le prompt builder, l'adapter Gemini et la route `POST /api/ai`
+- Premiere action: apres validation explicite, implementer l'UX `request_clarification` sans demarrer l'export PDF
 - Fichier de reference principal: `docs/PLAN.md`
