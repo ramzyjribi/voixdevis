@@ -1,9 +1,9 @@
 # Status - VoixDevis MVP
 
-Derniere mise a jour: 2026-06-14  
+Derniere mise a jour: 2026-06-15  
 Source de planification: `docs/PLAN.md`  
 Architecture de reference: `docs/ARCHITECTURE.md`  
-Statut global: Phase 2 terminee, Phase 3 en attente de validation utilisateur
+Statut global: Phase 3 terminee, Phase 4 en attente de validation utilisateur
 
 ## 1. Reprise rapide
 
@@ -21,17 +21,24 @@ Statut global: Phase 2 terminee, Phase 3 en attente de validation utilisateur
 - La Phase 2 est terminee: `lucide-react` installe, shadcn/ui initialise, composants UI requis ajoutes, AppShell responsive cree, rendu devis professionnel cree, ajout manuel article/template/ligne libre branche, edition/suppression de lignes et sections branchee, parametres entreprise persistants crees, bouton Nouveau devis branche.
 - Les controles Phase 2 passent: `npm.cmd run test:domain`, `npm.cmd run lint`, `npm.cmd run build`.
 - Verification navigateur effectuee sur `http://localhost:3001` avec `next start`: chargement desktop, ajout article, edition quantite, totaux, parametres entreprise et onglet mobile Devis valides.
-- La Phase 3 ne doit pas etre demarree sans validation utilisateur explicite.
+- La Phase 3 est terminee: panneau conversation cree, liste de messages creee, composer texte branche, bouton micro branche, hook `hooks/useSpeechRecognition.ts` implemente, transcription live affichee et fallback texte conserve.
+- La conversation Phase 3 reste volontairement locale: aucun appel Gemini, aucune mutation devis automatique par la voix, reponse assistant simulee courte apres envoi manuel.
+- Le bouton Nouveau devis repart sur une conversation propre avec un greeting local.
+- Les outils manuels client/lignes restent accessibles depuis le panneau lateral de la conversation.
+- Les controles Phase 3 passent: `npm.cmd run test:domain`, `npm.cmd run lint`, `npm.cmd run build`.
+- Verification navigateur automatisee limitee: `next start` repond en HTTP sur `127.0.0.1:3002` depuis le shell, mais le navigateur integre Codex a refuse la connexion locale pendant cette session.
+- La Phase 4 ne doit pas etre demarree sans validation utilisateur explicite.
 
 ### Prochaine action recommandee
 
-Attendre la validation utilisateur avant de demarrer la Phase 3 de `docs/PLAN.md`.
+Attendre la validation utilisateur avant de demarrer la Phase 4 de `docs/PLAN.md`.
 
 Si validation recue:
 
-1. Lire les guides Next.js locaux pertinents avant toute modification d'UI.
-2. Creer le panneau conversation et le composer texte.
-3. Ajouter la dictee assistee via `hooks/useSpeechRecognition.ts` sans declenchement Gemini automatique.
+1. Verifier la documentation officielle Gemini courante.
+2. Creer les tools Gemini, le prompt builder et l'adapter serveur.
+3. Creer la route `POST /api/ai` et le hook client de conversation IA.
+4. Brancher l'execution des tool calls valides sans jamais donner l'etat du devis a Gemini.
 
 
 ### Commandes de controle utiles
@@ -50,8 +57,8 @@ Ces commandes deviendront surtout utiles a partir des phases de code. Pour l'ins
 | 0 | Preparation du socle projet | Terminee | 100% | Rien | Aucune |
 | 1 | Fondations domaine et store | Terminee | 100% | Rien | Aucune |
 | 2 | UI devis, edition et parametres | Terminee | 100% | Rien | Aucune |
-| 3 | Conversation texte et dictee assistee | Non demarree | 0% | Validation utilisateur | Attendre validation avant de creer chat, composer et hook Web Speech |
-| 4 | Gemini Function Calling | Non demarree | 0% | Phases 1 et 3 | Creer tools, promptBuilder, route `/api/ai` |
+| 3 | Conversation texte et dictee assistee | Terminee | 100% | Rien | Aucune |
+| 4 | Gemini Function Calling | Non demarree | 0% | Validation utilisateur | Attendre validation avant de creer tools, promptBuilder, route `/api/ai` |
 | 5 | Clarifications et edge cases metier | Non demarree | 0% | Phase 4 | Implementer `request_clarification` et actions edge |
 | 6 | Export PDF | Non demarree | 0% | Phases 1, 2 et 5 | Ajouter `@react-pdf/renderer` et le document PDF |
 | 7 | Durcissement, QA et polish MVP | Non demarree | 0% | Phases 0 a 6 | Ajouter tests et verifier lint/build |
@@ -119,18 +126,18 @@ Resultat attendu: application locale utilisable sans IA.
 
 ### Phase 3 - Conversation texte et dictee assistee
 
-Statut: Non demarree
+Statut: Terminee
 
-- [ ] Creer le panneau conversation.
-- [ ] Creer la liste de messages.
-- [ ] Creer le composer texte.
-- [ ] Creer le bouton micro.
-- [ ] Implementer `hooks/useSpeechRecognition.ts`.
-- [ ] Afficher la transcription live.
-- [ ] Garantir que la voix ne declenche jamais Gemini automatiquement.
-- [ ] Ajouter le fallback texte si la Web Speech API est indisponible.
-- [ ] Tester saisie texte, correction avant envoi et refus micro.
-- [ ] Valider les criteres d'acceptation de la Phase 3 dans `docs/PLAN.md`.
+- [x] Creer le panneau conversation.
+- [x] Creer la liste de messages.
+- [x] Creer le composer texte.
+- [x] Creer le bouton micro.
+- [x] Implementer `hooks/useSpeechRecognition.ts`.
+- [x] Afficher la transcription live.
+- [x] Garantir que la voix ne declenche jamais Gemini automatiquement.
+- [x] Ajouter le fallback texte si la Web Speech API est indisponible.
+- [x] Tester saisie texte, correction avant envoi et refus micro.
+- [x] Valider les criteres d'acceptation de la Phase 3 dans `docs/PLAN.md`.
 
 Resultat attendu: saisie conversationnelle controlee, prete a etre connectee a Gemini.
 
@@ -242,6 +249,7 @@ Problemes concrets deja identifies, a surveiller pendant l'implementation.
 | Les dossiers `ai/`, `data/`, `docs/` apparaissent non suivis par Git dans ce worktree | Risque d'oublier des fichiers au commit | 0 | Resolu |
 | Web Speech API dependante de Chrome et du support navigateur | La voix peut etre indisponible chez certains utilisateurs | 3 | Ouvert |
 | La Web Speech API peut dependre du reseau/service navigateur | Transcription lente ou instable en conditions chantier | 3 | Ouvert |
+| Le navigateur integre Codex peut refuser l'acces a `127.0.0.1:3002` alors que le shell recoit HTTP 200 | Verification interactive automatisee limitee dans cette session | 3 | Ouvert |
 | Le reset devis est une action destructive | Perte de travail utilisateur si declenchement accidentel | 5 | Ouvert |
 | Gemini peut proposer des IDs invalides ou ambigus | Devis incoherent si validation insuffisante | 4 | Ouvert |
 | `next dev` peut echouer avec `Access is denied` lors de l'acquisition du lockfile `.next` | Verification dev server bloquee dans ce worktree | 2 | Ouvert |
@@ -274,6 +282,7 @@ Compromis acceptes pour le MVP, non bloquants maintenant mais a suivre apres sta
 | 2026-06-14 | Documentation | Ajout des regles UI, TypeScript, Zod et qualite dans `AGENTS.md` | Les prochaines implementations ont des garde-fous techniques et UI | Demarrer Phase 1 |
 | 2026-06-14 | Phase 1 | Installation de `zustand` et `zod`, creation du domaine devis, des validations, du store persistant et des tests domaine | Phase 1 terminee, controles `test:domain`, `lint` et `build` passes | Attendre validation utilisateur pour Phase 2 |
 | 2026-06-14 | Phase 2 | Initialisation shadcn/ui, creation AppShell responsive, rendu devis, parametres entreprise, ajout manuel, edition et suppression | Phase 2 terminee, controles `test:domain`, `lint`, `build` et verification navigateur passes | Attendre validation utilisateur pour Phase 3 |
+| 2026-06-15 | Phase 3 | Creation du panneau conversation, messages, composer texte, bouton micro, hook Web Speech et reponse assistant locale | Phase 3 terminee, controles `test:domain`, `lint` et `build` passes; navigateur integre bloque sur localhost | Attendre validation utilisateur pour Phase 4 |
 
 ## 9. Comment mettre a jour ce fichier
 
@@ -311,7 +320,7 @@ Statuts autorises pour les phases:
 
 Reprendre ici:
 
-- Phase: 3 - Conversation texte et dictee assistee
+- Phase: 4 - Gemini Function Calling
 - Statut: Non demarree, en attente de validation utilisateur
-- Premiere action: apres validation explicite, relire les guides Next.js locaux pertinents puis creer le panneau conversation, le composer texte et `hooks/useSpeechRecognition.ts`
+- Premiere action: apres validation explicite, verifier la documentation officielle Gemini courante puis creer les tools, le prompt builder, l'adapter Gemini et la route `POST /api/ai`
 - Fichier de reference principal: `docs/PLAN.md`

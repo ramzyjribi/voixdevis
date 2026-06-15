@@ -95,6 +95,12 @@ const createMessage = (
   createdAt: nowIso(),
 });
 
+const createNewQuoteGreeting = (): ChatMessage =>
+  createMessage(
+    "assistant",
+    "Nouveau devis pret. Je vous ecoute pour le client ou le premier article.",
+  );
+
 export const useQuoteStore = create<QuoteStore>()(
   persist<QuoteStore, [], [], QuotePersistedState>(
     (set) => ({
@@ -103,6 +109,7 @@ export const useQuoteStore = create<QuoteStore>()(
       createNewQuote: () =>
         set((state) => ({
           currentQuote: createEmptyQuote(state.companySettings.defaultTvaRate),
+          messages: [createNewQuoteGreeting()],
           clarification: null,
           liveTranscript: "",
           isProcessing: false,
