@@ -19,6 +19,7 @@ Statut global: Phase 5 terminee, Phase 6 en attente de validation utilisateur
 - La Phase 1 est terminee: dependances `zustand` et `zod` installees, types domaine/tools crees, helpers catalogue/templates crees, calculs financiers centralises crees, generateurs d'IDs crees, store Zustand persistant cree, actions devis locales implementees et tests domaine ajoutes.
 - Les controles Phase 1 passent: `npm.cmd run test:domain`, `npm.cmd run lint`, `npm.cmd run build`.
 - La Phase 2 est terminee: `lucide-react` installe, shadcn/ui initialise, composants UI requis ajoutes, AppShell responsive cree, rendu devis professionnel cree, ajout manuel article/template/ligne libre branche, edition/suppression de lignes et sections branchee, parametres entreprise persistants crees, bouton Nouveau devis branche.
+- Amelioration post-Phase 2: le volet manuel permet de rechercher articles et packs par designation, mots-cles ou ID, tolere une faute legere et conserve la liste complete parcourable quand la recherche est vide.
 - Les controles Phase 2 passent: `npm.cmd run test:domain`, `npm.cmd run lint`, `npm.cmd run build`.
 - Verification navigateur effectuee sur `http://localhost:3001` avec `next start`: chargement desktop, ajout article, edition quantite, totaux, parametres entreprise et onglet mobile Devis valides.
 - La Phase 3 est terminee: panneau conversation cree, liste de messages creee, composer texte branche, bouton micro branche, hook `hooks/useSpeechRecognition.ts` implemente, transcription live affichee et fallback texte conserve.
@@ -136,6 +137,7 @@ Statut: Terminee
 - [x] Ajouter l'edition manuelle des lignes.
 - [x] Ajouter les parametres entreprise persistants.
 - [x] Ajouter le bouton Nouveau devis.
+- [x] Ajouter la recherche et le parcours complet des articles et packs dans le volet manuel.
 - [x] Tester responsive, edition, suppression et persistence.
 - [x] Valider les criteres d'acceptation de la Phase 2 dans `docs/PLAN.md`.
 
@@ -313,6 +315,7 @@ Compromis acceptes pour le MVP, non bloquants maintenant mais a suivre apres sta
 | 2026-06-23 | Correctif Phase 4 | Conservation des statuts API Gemini et mapping `429`, `401/403`, `404`, `400` | Le quota gratuit atteint retourne maintenant `429` avec `Retry-After` et un message explicite | Configurer un quota adapte avant production |
 | 2026-06-24 | Documentation | Realignement de la Phase 5 avec l'executor livre en Phase 4 | `delete_section` est marque acquis; seul son test de non-regression reste a couvrir en Phase 5 | Attendre la validation utilisateur avant de demarrer Phase 5 |
 | 2026-06-24 | Phase 5 | Ajout des choix de clarification, resolution clic/texte/voix, messages sans mutation et confirmations de reset | Phase 5 terminee; 27 tests, lint, build et parcours Gemini desktop/mobile valides | Attendre validation utilisateur pour Phase 6 |
+| 2026-06-24 | Amelioration Phase 2 | Remplacement des selects manuels par une recherche classee avec listes completes Article et Pack | Recherche accents/mots-cles/faute legere validee; 31 tests, lint, build et responsive passent | Attendre validation utilisateur pour Phase 6 |
 
 ## 9. Comment mettre a jour ce fichier
 

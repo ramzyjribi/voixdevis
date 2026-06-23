@@ -3,18 +3,12 @@
 import { catalogArticles, interventionTemplates } from "@/domain/catalogLookup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuoteStore } from "@/store/useQuoteStore";
 import { CirclePlus, PackagePlus } from "lucide-react";
 import { useMemo, useState } from "react";
+import { CatalogPicker } from "./CatalogPicker";
 
 const DEFAULT_ARTICLE_ID = catalogArticles[0]?.id ?? "";
 const DEFAULT_TEMPLATE_ID = interventionTemplates[0]?.id ?? "";
@@ -26,6 +20,7 @@ export function ManualAddLineForm() {
     (state) => state.applyInterventionTemplate,
   );
   const [sectionName, setSectionName] = useState("Cuisine");
+  const [activeTab, setActiveTab] = useState("catalogue");
   const [articleId, setArticleId] = useState(DEFAULT_ARTICLE_ID);
   const [templateId, setTemplateId] = useState(DEFAULT_TEMPLATE_ID);
   const [quantity, setQuantity] = useState("1");
@@ -99,7 +94,7 @@ export function ManualAddLineForm() {
         />
       </div>
 
-      <Tabs defaultValue="catalogue">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-3">
           <TabsTrigger value="catalogue">Article</TabsTrigger>
           <TabsTrigger value="template">Pack</TabsTrigger>
@@ -107,18 +102,12 @@ export function ManualAddLineForm() {
         </TabsList>
 
         <TabsContent value="catalogue" className="space-y-3 pt-3">
-          <Select value={articleId} onValueChange={setArticleId}>
-            <SelectTrigger aria-label="Article catalogue">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {catalogArticles.map((article) => (
-                <SelectItem key={article.id} value={article.id}>
-                  {article.designation}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CatalogPicker
+            kind="article"
+            value={articleId}
+            onValueChange={setArticleId}
+            onCreateCustom={() => setActiveTab("custom")}
+          />
           <div className="grid grid-cols-[1fr_96px] gap-2">
             <Input
               aria-label="Quantité"
@@ -146,18 +135,12 @@ export function ManualAddLineForm() {
         </TabsContent>
 
         <TabsContent value="template" className="space-y-3 pt-3">
-          <Select value={templateId} onValueChange={setTemplateId}>
-            <SelectTrigger aria-label="Pack intervention">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {interventionTemplates.map((template) => (
-                <SelectItem key={template.id} value={template.id}>
-                  {template.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CatalogPicker
+            kind="template"
+            value={templateId}
+            onValueChange={setTemplateId}
+            onCreateCustom={() => setActiveTab("custom")}
+          />
           <Button
             type="button"
             className="w-full gap-2 bg-teal-700 hover:bg-teal-800"
