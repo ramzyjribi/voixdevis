@@ -6,6 +6,7 @@ import {
   GeminiModelError,
   getGeminiConfigFromEnv,
   normalizeGeminiFunctionCalls,
+  normalizeGeminiRequestError,
 } from "./geminiClient.ts";
 
 test("normalizeGeminiFunctionCalls parses an add_article fixture", () => {
@@ -83,4 +84,14 @@ test("getGeminiConfigFromEnv requires GEMINI_API_KEY", () => {
     }),
     { apiKey: "secret", model: "gemini-test" },
   );
+});
+
+test("normalizeGeminiRequestError preserves quota status and retry delay", () => {
+  const error = normalizeGeminiRequestError({
+    status: 429,
+    message: "Quota exceeded. Please retry in 39.2s.",
+  });
+
+  assert.equal(error.status, 429);
+  assert.equal(error.retryAfterSeconds, 40);
 });

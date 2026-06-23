@@ -30,6 +30,21 @@ export class GeminiModelError extends Error {
   }
 }
 
+export class GeminiApiError extends Error {
+  status?: number;
+  retryAfterSeconds?: number;
+
+  constructor(
+    message: string,
+    options?: { status?: number; retryAfterSeconds?: number },
+  ) {
+    super(message);
+    this.name = "GeminiApiError";
+    this.status = options?.status;
+    this.retryAfterSeconds = options?.retryAfterSeconds;
+  }
+}
+
 type GeminiConfig = {
   apiKey: string;
   model: string;
@@ -38,6 +53,47 @@ type GeminiConfig = {
 type RequestGeminiToolCallsInput = {
   quote: Quote;
   userMessage: string;
+};
+
+const extractRetryAfterSeconds = (message: string): number | undefined => {
+  const retryMatch =
+    message.match(/retry in ([\d.]+)s/i) ??
+    message.match(/"retryDelay":"([\d.]+)s"/i);
+
+  if (!retryMatch?.[1]) {
+    return undefined;
+  }
+
+  const retryAfterSeconds = Number(retryMatch[1]);
+  return Number.isFinite(retryAfterSeconds)
+    ? Math.ceil(retryAfterSeconds)
+    : undefined;
+};
+
+export const normalizeGeminiRequestError = (
+  error: unknown,
+): GeminiApiError => {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "object" &&
+          error !== null &&
+          "message" in error &&
+          typeof error.message === "string"
+        ? error.message
+        : String(error);
+  const status =
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof error.status === "number"
+      ? error.status
+      : undefined;
+
+  return new GeminiApiError(message, {
+    status,
+    retryAfterSeconds: extractRetryAfterSeconds(message),
+  });
 };
 
 export const getGeminiConfigFromEnv = (
@@ -120,6 +176,6 @@ export const requestGeminiToolCalls = async ({
       throw error;
     }
 
-    throw new GeminiModelError("Gemini request failed.");
+    throw normalizeGeminiRequestError(error);
   }
 };

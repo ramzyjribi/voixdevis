@@ -38,6 +38,7 @@ Statut global: Phase 4 terminee cote implementation, Phase 5 en attente de valid
 - Les controles du correctif micro passent: 18 tests, `npm.cmd run lint` et `npm.cmd run build`.
 - Le layout racine tolere les attributs ajoutes a `<html>` par les extensions navigateur comme Night Eye, sans masquer les erreurs d'hydratation des composants enfants.
 - L'adapter Gemini ne lit plus `response.text` quand la reponse contient des function calls; l'avertissement SDK sur les parties non textuelles est supprime.
+- Les erreurs API Gemini conservent leur statut: un quota `429` n'est plus masque en `502`; Vercel journalise maintenant le statut, le modele et un message borne sans secret.
 - La Phase 5 ne doit pas etre demarree sans validation utilisateur explicite.
 
 ### Prochaine action recommandee
@@ -266,6 +267,7 @@ Problemes concrets deja identifies, a surveiller pendant l'implementation.
 | Chrome desktop affichait deux fois la transcription intermediaire et Chrome mobile cumulait des fragments repetes | Texte du prompt duplique ou parfois perdu | 3 | Resolu |
 | L'extension Night Eye injecte `nighteye` sur `<html>` avant React | Avertissement d'hydratation en developpement | 3 | Resolu |
 | L'adapter lisait `response.text` sur une reponse Gemini composee de function calls | Avertissement SDK repetitif dans le terminal | 4 | Resolu |
+| Les erreurs API Gemini etaient toutes converties en `GeminiModelError` | Quota, cle ou modele signales a tort comme action invalide | 4 | Resolu |
 | Le reset devis est une action destructive | Perte de travail utilisateur si declenchement accidentel | 5 | Ouvert |
 | Gemini peut proposer des IDs invalides ou ambigus | Devis incoherent si validation insuffisante | 4 | Ouvert |
 | `next dev` peut echouer avec `Access is denied` lors de l'acquisition du lockfile `.next` | Verification dev server bloquee dans ce worktree | 2 | Ouvert |
@@ -306,6 +308,7 @@ Compromis acceptes pour le MVP, non bloquants maintenant mais a suivre apres sta
 | 2026-06-23 | Correctif Phase 3 | Reconstruction des resultats Web Speech, deduplication des fragments mobiles et suppression des deux encarts de transcription intermediaire | Une seule phrase est affichee dans le champ; le dernier interim est conserve; 18 tests, lint et build passent | Tester le micro sur Chrome desktop et Android reel |
 | 2026-06-23 | Correctif UI | Ajout de `suppressHydrationWarning` sur le seul element `<html>` modifie par Night Eye | L'attribut injecte par l'extension ne declenche plus l'overlay React | Conserver les autres alertes d'hydratation actives |
 | 2026-06-23 | Correctif Phase 4 | Suppression de la lecture `response.text` en mode Function Calling | Plus d'avertissement SDK `non-text parts functionCall`; les confirmations restent produites localement | Surveiller uniquement la latence Gemini |
+| 2026-06-23 | Correctif Phase 4 | Conservation des statuts API Gemini et mapping `429`, `401/403`, `404`, `400` | Le quota gratuit atteint retourne maintenant `429` avec `Retry-After` et un message explicite | Configurer un quota adapte avant production |
 
 ## 9. Comment mettre a jour ce fichier
 

@@ -1,4 +1,5 @@
 import {
+  GeminiApiError,
   GeminiConfigurationError,
   GeminiModelError,
   requestGeminiToolCalls,
@@ -50,6 +51,45 @@ export async function POST(request: Request): Promise<Response> {
   } catch (error) {
     if (error instanceof GeminiConfigurationError) {
       return jsonError({ error: "Cle Gemini manquante." }, 503);
+    }
+
+    if (error instanceof GeminiApiError) {
+      console.error("Gemini API request failed", {
+        status: error.status,
+        model: process.env.GEMINI_MODEL?.trim() || "default",
+        message: error.message.slice(0, 600),
+      });
+
+      if (error.status === 429) {
+        const retryAfterSeconds = error.retryAfterSeconds;
+        const retryMessage = retryAfterSeconds
+          ? `Quota Gemini atteint. Reessayez dans ${retryAfterSeconds} secondes.`
+          : "Quota Gemini atteint. Reessayez plus tard.";
+
+        return Response.json(
+          { error: retryMessage },
+          {
+            status: 429,
+            headers: retryAfterSeconds
+              ? { "Retry-After": String(retryAfterSeconds) }
+              : undefined,
+          },
+        );
+      }
+
+      if (error.status === 401 || error.status === 403) {
+        return jsonError({ error: "Cle Gemini invalide ou non autorisee." }, 503);
+      }
+
+      if (error.status === 404) {
+        return jsonError({ error: "Modele Gemini indisponible." }, 503);
+      }
+
+      if (error.status === 400) {
+        return jsonError({ error: "Requete Gemini rejetee." }, 502);
+      }
+
+      return jsonError({ error: "Gemini temporairement indisponible." }, 502);
     }
 
     if (error instanceof GeminiModelError) {
