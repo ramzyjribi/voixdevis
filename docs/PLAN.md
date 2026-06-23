@@ -570,7 +570,7 @@ Rendre les corrections naturelles et les intentions ambigues robustes dans l'UX 
 - Implementer `reset_quote`:
   - demander une confirmation UI si declenchement manuel;
   - appliquer directement si le flux produit le permet cote IA, selon garde-fou retenu.
-- Implementer `delete_section`.
+- Verifier et couvrir en non-regression `delete_section`, deja implemente en Phase 4.
 - Verifier les corrections naturelles:
   - suppression d'un article existant;
   - changement de quantite;

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ResetQuoteDialog } from "@/components/quote/ResetQuoteDialog";
 import { useAiConversation } from "@/hooks/useAiConversation";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { mergeSpeechSegments } from "@/hooks/speechTranscript";
@@ -26,7 +27,13 @@ const mergeDictation = (current: string, dictatedText: string): string => {
 export function Composer() {
   const [text, setText] = useState("");
   const dictationBaseRef = useRef("");
-  const { isSending, sendMessage } = useAiConversation();
+  const {
+    isSending,
+    isResetConfirmationOpen,
+    sendMessage,
+    confirmReset,
+    cancelReset,
+  } = useAiConversation();
   const {
     isSupported,
     isListening,
@@ -89,32 +96,39 @@ export function Composer() {
   };
 
   return (
-    <form className="border-t bg-white p-3" onSubmit={handleSubmit}>
-      <div className="flex items-end gap-2">
-        <VoiceRecorder
-          isSupported={isSupported}
-          isListening={isListening}
-          error={error}
-          onStart={handleStart}
-          onStop={stop}
-        />
-        <Textarea
-          aria-label="Message"
-          className="max-h-36 min-h-11 resize-none"
-          placeholder="Dicter ou ecrire le chantier"
-          value={text}
-          onChange={handleTextChange}
-          onKeyDown={handleKeyDown}
-        />
-        <Button
-          type="submit"
-          size="icon-lg"
-          aria-label="Envoyer"
-          disabled={!text.trim() || isSending}
-        >
-          <SendHorizontal />
-        </Button>
-      </div>
-    </form>
+    <>
+      <form className="border-t bg-white p-3" onSubmit={handleSubmit}>
+        <div className="flex items-end gap-2">
+          <VoiceRecorder
+            isSupported={isSupported}
+            isListening={isListening}
+            error={error}
+            onStart={handleStart}
+            onStop={stop}
+          />
+          <Textarea
+            aria-label="Message"
+            className="max-h-36 min-h-11 resize-none"
+            placeholder="Dicter ou ecrire le chantier"
+            value={text}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+          />
+          <Button
+            type="submit"
+            size="icon-lg"
+            aria-label="Envoyer"
+            disabled={!text.trim() || isSending}
+          >
+            <SendHorizontal />
+          </Button>
+        </div>
+      </form>
+      <ResetQuoteDialog
+        open={isResetConfirmationOpen}
+        onConfirm={confirmReset}
+        onCancel={cancelReset}
+      />
+    </>
   );
 }

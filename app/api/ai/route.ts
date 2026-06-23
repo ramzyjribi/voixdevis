@@ -5,7 +5,11 @@ import {
   requestGeminiToolCalls,
 } from "@/ai/geminiClient";
 import type { AiRouteError } from "@/ai/types";
-import { nonEmptyStringSchema, quoteSchema } from "@/domain/validation";
+import {
+  clarificationSchema,
+  nonEmptyStringSchema,
+  quoteSchema,
+} from "@/domain/validation";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -14,6 +18,7 @@ const aiRequestSchema = z
   .object({
     message: nonEmptyStringSchema,
     quote: quoteSchema,
+    clarification: clarificationSchema.optional(),
   })
   .strict();
 
@@ -45,6 +50,7 @@ export async function POST(request: Request): Promise<Response> {
     const response = await requestGeminiToolCalls({
       quote: parsedBody.data.quote,
       userMessage: parsedBody.data.message,
+      clarification: parsedBody.data.clarification,
     });
 
     return Response.json(response);

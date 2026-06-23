@@ -181,3 +181,101 @@ test("executeAiToolCalls stores clarification and skips later mutations", () => 
     "ART_MIT_THERMO_BAIN",
   ]);
 });
+
+test("executeAiToolCalls filters unknown and duplicate clarification candidates", () => {
+  const harness = createExecutorHarness();
+
+  executeAiToolCalls(
+    [
+      {
+        name: "request_clarification",
+        args: {
+          userMessageFeedback: "Lequel ?",
+          candidates: [
+            "ART_MIT_THERMO_DOUCHE",
+            "ART_UNKNOWN",
+            "ART_MIT_THERMO_DOUCHE",
+          ],
+        },
+      },
+    ],
+    harness.context,
+  );
+
+  assert.deepEqual(harness.clarification?.candidates, [
+    "ART_MIT_THERMO_DOUCHE",
+  ]);
+});
+
+test("answer_question and unknown_action never mutate the quote", () => {
+  const harness = createExecutorHarness();
+  harness.context.addArticle({ articleId: "ART_MIT_EVIER_STD" });
+  const quoteBefore = structuredClone(harness.quote);
+  const result = executeAiToolCalls(
+    [
+      {
+        name: "answer_question",
+        args: { userMessageFeedback: "Le total est disponible dans le devis." },
+      },
+      {
+        name: "unknown_action",
+        args: { userMessageFeedback: "Demande hors du devis." },
+      },
+    ],
+    harness.context,
+  );
+
+  assert.deepEqual(harness.quote, quoteBefore);
+  assert.deepEqual(result.appliedToolNames, [
+    "answer_question",
+    "unknown_action",
+  ]);
+});
+
+test("reset_quote requests UI confirmation without mutating the quote", () => {
+  const harness = createExecutorHarness();
+  harness.context.addArticle({ articleId: "ART_MIT_EVIER_STD" });
+  const quoteBefore = structuredClone(harness.quote);
+  const result = executeAiToolCalls(
+    [{ name: "reset_quote", args: {} }],
+    harness.context,
+  );
+
+  assert.deepEqual(harness.quote, quoteBefore);
+  assert.deepEqual(result.events, ["quote_reset_requested"]);
+  assert.deepEqual(result.rejectedToolCalls, []);
+});
+
+test("reset_quote skips every mutation returned in the same response", () => {
+  const harness = createExecutorHarness();
+  const result = executeAiToolCalls(
+    [
+      { name: "add_article", args: { articleId: "ART_MIT_EVIER_STD" } },
+      { name: "reset_quote", args: {} },
+    ],
+    harness.context,
+  );
+
+  assert.deepEqual(result.appliedToolNames, ["reset_quote"]);
+  assert.equal(harness.quote.sections.length, 0);
+});
+
+test("delete_section removes every line in the target section", () => {
+  const harness = createExecutorHarness();
+  harness.context.addArticle({
+    articleId: "ART_MIT_EVIER_STD",
+    sectionName: "Cuisine",
+  });
+  harness.context.addArticle({
+    articleId: "ART_MO_PLOMB",
+    sectionName: "Cuisine",
+  });
+
+  const result = executeAiToolCalls(
+    [{ name: "delete_section", args: { sectionName: "Cuisine" } }],
+    harness.context,
+  );
+
+  assert.deepEqual(result.appliedToolNames, ["delete_section"]);
+  assert.equal(harness.quote.sections.length, 0);
+});

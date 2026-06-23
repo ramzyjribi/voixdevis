@@ -10,7 +10,7 @@ import {
   geminiFunctionNames,
 } from "./tools.ts";
 import { aiToolCallsSchema } from "../domain/validation.ts";
-import type { Quote } from "../domain/quoteTypes.ts";
+import type { ClarificationState, Quote } from "../domain/quoteTypes.ts";
 import type { AiToolCall } from "../domain/toolTypes.ts";
 import type { AiRouteResponse } from "./types.ts";
 
@@ -54,6 +54,7 @@ type GeminiConfig = {
 type RequestGeminiToolCallsInput = {
   quote: Quote;
   userMessage: string;
+  clarification?: ClarificationState;
 };
 
 const extractRetryAfterSeconds = (message: string): number | undefined => {
@@ -140,10 +141,11 @@ export const normalizeGeminiFunctionCalls = (
 export const requestGeminiToolCalls = async ({
   quote,
   userMessage,
+  clarification,
 }: RequestGeminiToolCallsInput): Promise<AiRouteResponse> => {
   const { apiKey, model } = getGeminiConfigFromEnv();
   const ai = new GoogleGenAI({ apiKey });
-  const prompt = buildGeminiPrompt({ quote, userMessage });
+  const prompt = buildGeminiPrompt({ quote, userMessage, clarification });
 
   try {
     const response = await ai.models.generateContent({

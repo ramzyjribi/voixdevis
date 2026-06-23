@@ -1,6 +1,7 @@
 "use client";
 
 import { Composer } from "@/components/chat/Composer";
+import { ClarificationActions } from "@/components/chat/ClarificationActions";
 import { MessageList } from "@/components/chat/MessageList";
 import { ClientInfoForm } from "@/components/quote/ClientInfoForm";
 import { ManualAddLineForm } from "@/components/quote/ManualAddLineForm";
@@ -52,6 +53,8 @@ export function ChatPanel() {
       </div>
 
       <MessageList messages={messages} isProcessing={isProcessing} />
+
+      <ClarificationActions />
 
       <Composer />
     </div>

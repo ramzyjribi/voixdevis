@@ -4,6 +4,7 @@ import { DesktopSplit } from "@/components/app-shell/DesktopSplit";
 import { MobileTabs } from "@/components/app-shell/MobileTabs";
 import { QuotePreview } from "@/components/quote/QuotePreview";
 import { QuoteWorkspace } from "@/components/quote/QuoteWorkspace";
+import { ResetQuoteDialog } from "@/components/quote/ResetQuoteDialog";
 import { SettingsDialog } from "@/components/settings/SettingsDialog";
 import { Button } from "@/components/ui/button";
 import { useQuoteStore } from "@/store/useQuoteStore";
@@ -12,7 +13,14 @@ import { useState } from "react";
 
 export function AppShell() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isNewQuoteConfirmationOpen, setIsNewQuoteConfirmationOpen] =
+    useState(false);
   const createNewQuote = useQuoteStore((state) => state.createNewQuote);
+
+  const confirmNewQuote = () => {
+    createNewQuote();
+    setIsNewQuoteConfirmationOpen(false);
+  };
 
   const controls = (
     <div className="flex items-center gap-2">
@@ -30,7 +38,7 @@ export function AppShell() {
         type="button"
         variant="outline"
         className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-        onClick={createNewQuote}
+        onClick={() => setIsNewQuoteConfirmationOpen(true)}
       >
         <FilePlus2 />
         Nouveau devis
@@ -66,6 +74,12 @@ export function AppShell() {
       </div>
 
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+      <ResetQuoteDialog
+        open={isNewQuoteConfirmationOpen}
+        confirmLabel="Creer le devis"
+        onConfirm={confirmNewQuote}
+        onCancel={() => setIsNewQuoteConfirmationOpen(false)}
+      />
     </main>
   );
 }

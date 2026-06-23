@@ -1,9 +1,9 @@
 # Status - VoixDevis MVP
 
-Derniere mise a jour: 2026-06-23
+Derniere mise a jour: 2026-06-24
 Source de planification: `docs/PLAN.md`  
 Architecture de reference: `docs/ARCHITECTURE.md`  
-Statut global: Phase 4 terminee cote implementation, Phase 5 en attente de validation utilisateur
+Statut global: Phase 5 terminee, Phase 6 en attente de validation utilisateur
 
 ## 1. Reprise rapide
 
@@ -31,7 +31,7 @@ Statut global: Phase 4 terminee cote implementation, Phase 5 en attente de valid
 - La Phase 4 est terminee cote implementation: SDK `@google/genai` installe, declarations tools creees, prompt builder cree, adapter serveur cree, route `POST /api/ai` creee, hook client branche et executor local valide.
 - Le composer n'utilise plus la reponse locale simulee: l'envoi explicite appelle `/api/ai`, puis les tool calls valides sont appliques par le store.
 - La cle Gemini reste cote serveur via `GEMINI_API_KEY`; `GEMINI_MODEL` permet de choisir le modele sans modifier le code.
-- L'executor refuse les `articleId`, `templateId`, `lineItemId` et sections inconnus sans corrompre le devis; `reset_quote` reste refuse sans confirmation jusqu'a la Phase 5.
+- L'executor refuse les `articleId`, `templateId`, `lineItemId` et sections inconnus sans corrompre le devis.
 - Les controles Phase 4 passent: `npm.cmd run test:domain`, `npm.cmd run lint`, `npm.cmd run build`.
 - Verification locale Phase 4: sans `GEMINI_API_KEY`, `POST /api/ai` retourne bien l'erreur courte `Cle Gemini manquante.`.
 - Correctif Web Speech desktop/mobile applique: les resultats cumulatifs sont dedupliques, la transcription intermediaire apparait uniquement dans le champ, et le dernier texte intermediaire est conserve si le navigateur termine la session avant de le marquer final.
@@ -39,18 +39,22 @@ Statut global: Phase 4 terminee cote implementation, Phase 5 en attente de valid
 - Le layout racine tolere les attributs ajoutes a `<html>` par les extensions navigateur comme Night Eye, sans masquer les erreurs d'hydratation des composants enfants.
 - L'adapter Gemini ne lit plus `response.text` quand la reponse contient des function calls; l'avertissement SDK sur les parties non textuelles est supprime.
 - Les erreurs API Gemini conservent leur statut: un quota `429` n'est plus masque en `502`; Vercel journalise maintenant le statut, le modele et un message borne sans secret.
-- La Phase 5 ne doit pas etre demarree sans validation utilisateur explicite.
+- `delete_section` a ete livre avec l'executor de Phase 4, confirme via Gemini et couvert par un test de non-regression en Phase 5.
+- La Phase 5 est terminee: les clarifications affichent des candidats catalogue tactiles, le clic ajoute localement l'article choisi et une reponse texte/voix conserve le contexte de clarification pour Gemini.
+- `answer_question` et `unknown_action` restent sans mutation; `reset_quote` et le bouton Nouveau devis demandent une confirmation avant de vider le travail courant.
+- Les controles Phase 5 passent: 27 tests, `npm.cmd run lint`, `npm.cmd run build`, parcours Gemini reel desktop et verification responsive mobile sans debordement.
+- La Phase 6 ne doit pas etre demarree sans validation utilisateur explicite.
 
 ### Prochaine action recommandee
 
-Attendre la validation utilisateur avant de demarrer la Phase 5 de `docs/PLAN.md`.
+Attendre la validation utilisateur avant de demarrer la Phase 6 de `docs/PLAN.md`.
 
 Si validation recue:
 
-1. Implementer l'UX de clarification avec `request_clarification`.
-2. Creer les actions de choix candidat sans confier la mutation a Gemini.
-3. Implementer les edge cases Phase 5: reset confirme, questions, hors scope et suppression robuste.
-4. Tester les ambiguites et les commandes limites sans corrompre le devis.
+1. Installer `@react-pdf/renderer`.
+2. Creer le snapshot PDF immutable et `QuotePdfDocument`.
+3. Brancher l'export manuel puis le tool `trigger_pdf_export`.
+4. Verifier que les totaux PDF et UI restent identiques.
 
 
 ### Commandes de controle utiles
@@ -72,8 +76,8 @@ npm run test:domain
 | 2 | UI devis, edition et parametres | Terminee | 100% | Rien | Aucune |
 | 3 | Conversation texte et dictee assistee | Terminee | 100% | Rien | Aucune |
 | 4 | Gemini Function Calling | Terminee | 100% | Rien | Aucune |
-| 5 | Clarifications et edge cases metier | Non demarree | 0% | Validation utilisateur | Attendre validation avant d'implementer `request_clarification` et les actions edge |
-| 6 | Export PDF | Non demarree | 0% | Phases 1, 2 et 5 | Ajouter `@react-pdf/renderer` et le document PDF |
+| 5 | Clarifications et edge cases metier | Terminee | 100% | Rien | Aucune |
+| 6 | Export PDF | Non demarree | 0% | Validation utilisateur | Attendre validation avant d'ajouter `@react-pdf/renderer` et le document PDF |
 | 7 | Durcissement, QA et polish MVP | Non demarree | 0% | Phases 0 a 6 | Ajouter tests et verifier lint/build |
 
 Legende:
@@ -174,19 +178,19 @@ Resultat attendu: l'IA peut modifier le devis via tool calls valides et executes
 
 ### Phase 5 - Clarifications et edge cases metier
 
-Statut: Non demarree
+Statut: Terminee
 
-- [ ] Implementer `request_clarification`.
-- [ ] Creer `components/chat/ClarificationActions.tsx`.
-- [ ] Mapper les candidate IDs vers les articles catalogue.
-- [ ] Implementer le clic candidat.
-- [ ] Gerer la resolution texte/voix d'une clarification.
-- [ ] Implementer `answer_question`.
-- [ ] Implementer `unknown_action`.
-- [ ] Implementer `reset_quote`.
-- [ ] Implementer `delete_section`.
-- [ ] Tester ambiguite, clic candidat, question, hors scope, reset et suppression section.
-- [ ] Valider les criteres d'acceptation de la Phase 5 dans `docs/PLAN.md`.
+- [x] Implementer `request_clarification`.
+- [x] Creer `components/chat/ClarificationActions.tsx`.
+- [x] Mapper les candidate IDs vers les articles catalogue.
+- [x] Implementer le clic candidat.
+- [x] Gerer la resolution texte/voix d'une clarification.
+- [x] Implementer `answer_question`.
+- [x] Implementer `unknown_action`.
+- [x] Implementer `reset_quote`.
+- [x] `delete_section` deja implemente en Phase 4 et confirme par un test manuel via Gemini.
+- [x] Tester ambiguite, clic candidat, question, hors scope, reset et suppression section.
+- [x] Valider les criteres d'acceptation de la Phase 5 dans `docs/PLAN.md`.
 
 Resultat attendu: le flux conversationnel gere les ambiguites et les commandes limites sans corrompre le devis.
 
@@ -250,7 +254,6 @@ Resultat attendu: MVP stable, testable et demonstrable.
 | Web Speech API | Support navigateur variable | Fallback texte obligatoire en Phase 3 |
 | LocalStorage | Donnees corrompues ou schema ancien | Versionner la persistence en Phase 1 |
 | UI/PDF | Totaux divergents | Reutiliser les selectors de calcul en Phase 6 |
-| Reset devis | Action destructive | Prevoir une UX claire en Phase 5 |
 | `next dev` local | Echec possible sur lockfile `.next` selon permissions Windows | Utiliser `npm.cmd run build` ou lancer `next dev` au premier plan pour verification ciblee |
 
 ## 6. Known Issues
@@ -268,8 +271,8 @@ Problemes concrets deja identifies, a surveiller pendant l'implementation.
 | L'extension Night Eye injecte `nighteye` sur `<html>` avant React | Avertissement d'hydratation en developpement | 3 | Resolu |
 | L'adapter lisait `response.text` sur une reponse Gemini composee de function calls | Avertissement SDK repetitif dans le terminal | 4 | Resolu |
 | Les erreurs API Gemini etaient toutes converties en `GeminiModelError` | Quota, cle ou modele signales a tort comme action invalide | 4 | Resolu |
-| Le reset devis est une action destructive | Perte de travail utilisateur si declenchement accidentel | 5 | Ouvert |
-| Gemini peut proposer des IDs invalides ou ambigus | Devis incoherent si validation insuffisante | 4 | Ouvert |
+| Le reset devis est une action destructive | Perte de travail utilisateur si declenchement accidentel | 5 | Resolu |
+| Gemini peut proposer des IDs invalides ou ambigus | Devis incoherent si validation insuffisante | 4 | Resolu |
 | `next dev` peut echouer avec `Access is denied` lors de l'acquisition du lockfile `.next` | Verification dev server bloquee dans ce worktree | 2 | Ouvert |
 | `GEMINI_API_KEY` n'etait pas renseignee pendant la validation initiale Phase 4 | Verification live Gemini alors impossible | 4 | Resolu |
 
@@ -286,7 +289,6 @@ Compromis acceptes pour le MVP, non bloquants maintenant mais a suivre apres sta
 | Tests e2e Playwright repousses | D'abord stabiliser domaine, UI et IA mockee | Ajouter apres Phase 7 si besoin demo robuste |
 | `answer_question` depend du contexte injecte a Gemini | Acceptable si les totaux calcules sont fournis par l'app | Reponses calculees par l'app puis formulees par IA |
 | Catalogue limite a la plomberie | Scope MVP clair | Extension multi-metiers |
-| `reset_quote` est valide comme tool call mais refuse sans confirmation | Evite une suppression destructive avant l'UX Phase 5 | Brancher la confirmation en Phase 5 |
 
 ## 8. Journal de progression
 
@@ -309,6 +311,8 @@ Compromis acceptes pour le MVP, non bloquants maintenant mais a suivre apres sta
 | 2026-06-23 | Correctif UI | Ajout de `suppressHydrationWarning` sur le seul element `<html>` modifie par Night Eye | L'attribut injecte par l'extension ne declenche plus l'overlay React | Conserver les autres alertes d'hydratation actives |
 | 2026-06-23 | Correctif Phase 4 | Suppression de la lecture `response.text` en mode Function Calling | Plus d'avertissement SDK `non-text parts functionCall`; les confirmations restent produites localement | Surveiller uniquement la latence Gemini |
 | 2026-06-23 | Correctif Phase 4 | Conservation des statuts API Gemini et mapping `429`, `401/403`, `404`, `400` | Le quota gratuit atteint retourne maintenant `429` avec `Retry-After` et un message explicite | Configurer un quota adapte avant production |
+| 2026-06-24 | Documentation | Realignement de la Phase 5 avec l'executor livre en Phase 4 | `delete_section` est marque acquis; seul son test de non-regression reste a couvrir en Phase 5 | Attendre la validation utilisateur avant de demarrer Phase 5 |
+| 2026-06-24 | Phase 5 | Ajout des choix de clarification, resolution clic/texte/voix, messages sans mutation et confirmations de reset | Phase 5 terminee; 27 tests, lint, build et parcours Gemini desktop/mobile valides | Attendre validation utilisateur pour Phase 6 |
 
 ## 9. Comment mettre a jour ce fichier
 
@@ -346,7 +350,7 @@ Statuts autorises pour les phases:
 
 Reprendre ici:
 
-- Phase: 5 - Clarifications et edge cases metier
+- Phase: 6 - Export PDF
 - Statut: Non demarree, en attente de validation utilisateur
-- Premiere action: apres validation explicite, implementer l'UX `request_clarification` sans demarrer l'export PDF
+- Premiere action: apres validation explicite, relire la Phase 6 et installer `@react-pdf/renderer`
 - Fichier de reference principal: `docs/PLAN.md`

@@ -17,7 +17,7 @@ import type {
 } from "@/domain/toolTypes";
 import { aiRouteResponseSchema } from "@/domain/validation";
 import { getQuoteStoreSnapshot, useQuoteStore } from "@/store/useQuoteStore";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 const createExecutorContext = (): ToolExecutorContext => ({
   getQuote: () => getQuoteStoreSnapshot().currentQuote,
@@ -67,6 +67,7 @@ const extractErrorMessage = (payload: unknown): string => {
 
 export function useAiConversation() {
   const isSending = useQuoteStore((state) => state.isProcessing);
+  const [isResetConfirmationOpen, setIsResetConfirmationOpen] = useState(false);
 
   const sendMessage = useCallback(async (content: string) => {
     const message = content.trim();
@@ -76,9 +77,9 @@ export function useAiConversation() {
     }
 
     const store = getQuoteStoreSnapshot();
+    const clarification = store.clarification;
     store.addUserMessage(message);
     store.setProcessing(true);
-    store.clearClarification();
 
     try {
       const response = await fetch("/api/ai", {
@@ -89,6 +90,7 @@ export function useAiConversation() {
         body: JSON.stringify({
           message,
           quote: getQuoteStoreSnapshot().currentQuote,
+          clarification,
         }),
       });
       const payload = await readJson(response);
@@ -117,6 +119,10 @@ export function useAiConversation() {
       assistantMessages.forEach((assistantMessage) => {
         getQuoteStoreSnapshot().addAssistantMessage(assistantMessage);
       });
+
+      if (execution.events.includes("quote_reset_requested")) {
+        setIsResetConfirmationOpen(true);
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Erreur IA temporaire.";
@@ -126,8 +132,23 @@ export function useAiConversation() {
     }
   }, []);
 
+  const confirmReset = useCallback(() => {
+    const store = getQuoteStoreSnapshot();
+    store.resetQuote();
+    store.addAssistantMessage("Devis reinitialise.");
+    setIsResetConfirmationOpen(false);
+  }, []);
+
+  const cancelReset = useCallback(() => {
+    setIsResetConfirmationOpen(false);
+    getQuoteStoreSnapshot().addAssistantMessage("Reinitialisation annulee.");
+  }, []);
+
   return {
     isSending,
+    isResetConfirmationOpen,
     sendMessage,
+    confirmReset,
+    cancelReset,
   };
 }

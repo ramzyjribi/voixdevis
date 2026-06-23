@@ -167,8 +167,8 @@ export const geminiFunctionDeclarations: FunctionDeclaration[] = [
         userMessageFeedback: stringSchema("Question courte a poser a l'utilisateur."),
         candidates: {
           type: Type.ARRAY,
-          items: stringSchema("ID candidat article ou template."),
-          description: "IDs candidats issus du catalogue.",
+          items: stringSchema("ID candidat article."),
+          description: "IDs d'articles candidats issus du catalogue.",
         },
       },
       ["userMessageFeedback"],

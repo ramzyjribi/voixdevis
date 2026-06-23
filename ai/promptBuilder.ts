@@ -1,10 +1,15 @@
 import { catalogArticles, interventionTemplates } from "../domain/catalogLookup.ts";
 import { calculateQuoteTotals } from "../domain/quoteCalculations.ts";
-import type { Quote, QuoteLineItem } from "../domain/quoteTypes.ts";
+import type {
+  ClarificationState,
+  Quote,
+  QuoteLineItem,
+} from "../domain/quoteTypes.ts";
 
 type BuildGeminiPromptInput = {
   quote: Quote;
   userMessage: string;
+  clarification?: ClarificationState;
 };
 
 const compactLineItem = (lineItem: QuoteLineItem) => ({
@@ -49,14 +54,25 @@ const compactCatalog = () => ({
 export const buildGeminiPrompt = ({
   quote,
   userMessage,
-}: BuildGeminiPromptInput): string =>
-  [
+  clarification,
+}: BuildGeminiPromptInput): string => {
+  const promptParts = [
     "[CATALOGUE_DISPONIBLE]",
     JSON.stringify(compactCatalog()),
     "",
     "[CONTEXTE_DEVIS_ACTUEL]",
     JSON.stringify(compactQuote(quote)),
-    "",
-    "[MESSAGE_UTILISATEUR]",
-    userMessage,
-  ].join("\n");
+  ];
+
+  if (clarification) {
+    promptParts.push(
+      "",
+      "[CONTEXTE_CLARIFICATION_EN_COURS]",
+      JSON.stringify(clarification),
+    );
+  }
+
+  promptParts.push("", "[MESSAGE_UTILISATEUR]", userMessage);
+
+  return promptParts.join("\n");
+};

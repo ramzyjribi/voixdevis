@@ -21,7 +21,9 @@ import type {
 } from "./toolTypes.ts";
 import { aiToolCallSchema } from "./validation.ts";
 
-export type ToolExecutionEvent = "pdf_export_requested";
+export type ToolExecutionEvent =
+  | "pdf_export_requested"
+  | "quote_reset_requested";
 
 export type ToolCallRejection = {
   name: string;
@@ -172,7 +174,13 @@ const executeClarification = (
   context: ToolExecutorContext,
   result: ToolExecutionResult,
 ): void => {
-  const candidates = toolCall.args.candidates ?? [];
+  const candidates = [
+    ...new Set(
+      (toolCall.args.candidates ?? []).filter((candidateId) =>
+        Boolean(findCatalogArticleById(candidateId)),
+      ),
+    ),
+  ];
 
   context.setClarification({
     userMessageFeedback: toolCall.args.userMessageFeedback,
@@ -180,6 +188,12 @@ const executeClarification = (
   });
   result.appliedToolNames.push(toolCall.name);
   result.assistantMessages.push(toolCall.args.userMessageFeedback);
+};
+
+const executeResetRequest = (result: ToolExecutionResult): void => {
+  result.appliedToolNames.push("reset_quote");
+  result.events.push("quote_reset_requested");
+  result.assistantMessages.push("Confirmez la reinitialisation du devis.");
 };
 
 const parseToolCalls = (
@@ -228,6 +242,11 @@ export const executeAiToolCalls = (
 
   context.clearClarification();
 
+  if (toolCalls.some((toolCall) => toolCall.name === "reset_quote")) {
+    executeResetRequest(result);
+    return result;
+  }
+
   toolCalls.forEach((toolCall) => {
     switch (toolCall.name) {
       case "set_client_info":
@@ -252,11 +271,7 @@ export const executeAiToolCalls = (
         result.assistantMessages.push("Export PDF demande.");
         break;
       case "reset_quote":
-        pushRejection(
-          result,
-          toolCall.name,
-          "reinitialisation non disponible sans confirmation.",
-        );
+        executeResetRequest(result);
         break;
     }
   });

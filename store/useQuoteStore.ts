@@ -15,6 +15,7 @@ import {
   setQuoteTva,
   updateQuoteLine,
 } from "../domain/quoteActions.ts";
+import { addClarificationCandidateToQuote } from "../domain/clarification.ts";
 import type {
   AddArticleArgs,
   AddCustomLineArgs,
@@ -57,6 +58,7 @@ type QuoteActions = {
   addAssistantMessage: (content: string) => void;
   setClarification: (clarification: NonNullable<ClarificationState>) => void;
   clearClarification: () => void;
+  selectClarificationCandidate: (articleId: string) => boolean;
   setProcessing: (isProcessing: boolean) => void;
   setLiveTranscript: (liveTranscript: string) => void;
 };
@@ -103,7 +105,7 @@ const createNewQuoteGreeting = (): ChatMessage =>
 
 export const useQuoteStore = create<QuoteStore>()(
   persist<QuoteStore, [], [], QuotePersistedState>(
-    (set) => ({
+    (set, get) => ({
       ...createInitialState(),
 
       createNewQuote: () =>
@@ -192,6 +194,29 @@ export const useQuoteStore = create<QuoteStore>()(
 
       setClarification: (clarification) => set({ clarification }),
       clearClarification: () => set({ clarification: null }),
+      selectClarificationCandidate: (articleId) => {
+        const state = get();
+
+        try {
+          const currentQuote = addClarificationCandidateToQuote(
+            state.currentQuote,
+            state.clarification,
+            articleId,
+          );
+
+          set({
+            currentQuote,
+            clarification: null,
+            messages: [
+              ...state.messages,
+              createMessage("assistant", "Article ajoute."),
+            ],
+          });
+          return true;
+        } catch {
+          return false;
+        }
+      },
       setProcessing: (isProcessing) => set({ isProcessing }),
       setLiveTranscript: (liveTranscript) => set({ liveTranscript }),
     }),
