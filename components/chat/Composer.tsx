@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAiConversation } from "@/hooks/useAiConversation";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
-import { useQuoteStore } from "@/store/useQuoteStore";
+import { mergeSpeechSegments } from "@/hooks/speechTranscript";
 import { SendHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { FormEvent, KeyboardEvent } from "react";
+import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import { VoiceRecorder } from "./VoiceRecorder";
 
 const mergeDictation = (current: string, dictatedText: string): string => {
@@ -25,8 +25,7 @@ const mergeDictation = (current: string, dictatedText: string): string => {
 
 export function Composer() {
   const [text, setText] = useState("");
-  const lastTranscriptRef = useRef("");
-  const setLiveTranscript = useQuoteStore((state) => state.setLiveTranscript);
+  const dictationBaseRef = useRef("");
   const { isSending, sendMessage } = useAiConversation();
   const {
     isSupported,
@@ -40,28 +39,28 @@ export function Composer() {
   } = useSpeechRecognition();
 
   useEffect(() => {
-    const previous = lastTranscriptRef.current;
+    const dictatedText = mergeSpeechSegments(transcript, interimTranscript);
 
-    if (transcript && transcript !== previous) {
-      const nextChunk = transcript.startsWith(previous)
-        ? transcript.slice(previous.length)
-        : transcript;
-
-      setText((current) => mergeDictation(current, nextChunk));
-      lastTranscriptRef.current = transcript;
+    if (dictatedText || isListening) {
+      setText(mergeDictation(dictationBaseRef.current, dictatedText));
     }
-  }, [transcript]);
+  }, [interimTranscript, isListening, transcript]);
 
-  useEffect(() => {
-    setLiveTranscript(interimTranscript);
-  }, [interimTranscript, setLiveTranscript]);
+  const handleStart = () => {
+    dictationBaseRef.current = text;
+    start();
+  };
 
-  useEffect(
-    () => () => {
-      setLiveTranscript("");
-    },
-    [setLiveTranscript],
-  );
+  const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const nextText = event.target.value;
+
+    if (isListening) {
+      reset();
+    }
+
+    dictationBaseRef.current = nextText;
+    setText(nextText);
+  };
 
   const submitMessage = () => {
     const content = text.trim();
@@ -72,9 +71,8 @@ export function Composer() {
 
     stop();
     reset();
-    lastTranscriptRef.current = "";
+    dictationBaseRef.current = "";
     setText("");
-    setLiveTranscript("");
     void sendMessage(content);
   };
 
@@ -92,17 +90,12 @@ export function Composer() {
 
   return (
     <form className="border-t bg-white p-3" onSubmit={handleSubmit}>
-      {interimTranscript ? (
-        <div className="mb-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-          {interimTranscript}
-        </div>
-      ) : null}
       <div className="flex items-end gap-2">
         <VoiceRecorder
           isSupported={isSupported}
           isListening={isListening}
           error={error}
-          onStart={start}
+          onStart={handleStart}
           onStop={stop}
         />
         <Textarea
@@ -110,7 +103,7 @@ export function Composer() {
           className="max-h-36 min-h-11 resize-none"
           placeholder="Dicter ou ecrire le chantier"
           value={text}
-          onChange={(event) => setText(event.target.value)}
+          onChange={handleTextChange}
           onKeyDown={handleKeyDown}
         />
         <Button

@@ -20,7 +20,6 @@ export function ChatPanel() {
   const quote = useQuoteStore((state) => state.currentQuote);
   const messages = useQuoteStore((state) => state.messages);
   const isProcessing = useQuoteStore((state) => state.isProcessing);
-  const liveTranscript = useQuoteStore((state) => state.liveTranscript);
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-zinc-50">
@@ -53,12 +52,6 @@ export function ChatPanel() {
       </div>
 
       <MessageList messages={messages} isProcessing={isProcessing} />
-
-      {liveTranscript ? (
-        <div className="border-t bg-emerald-50 px-4 py-2 text-sm text-emerald-900">
-          {liveTranscript}
-        </div>
-      ) : null}
 
       <Composer />
     </div>

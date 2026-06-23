@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:domain": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types \"domain/**/*.test.ts\" \"ai/**/*.test.ts\""
+    "test:domain": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types \"domain/**/*.test.ts\" \"ai/**/*.test.ts\" \"hooks/**/*.test.ts\""
   },
   "dependencies": {
     "@google/genai": "^2.8.0",

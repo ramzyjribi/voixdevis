@@ -108,7 +108,6 @@ export const requestGeminiToolCalls = async ({
     const normalized = normalizeGeminiFunctionCalls(response.functionCalls);
 
     return {
-      assistantMessage: response.text?.trim() || undefined,
       toolCalls: normalized.toolCalls,
       toolCallIds: normalized.toolCallIds,
       model,

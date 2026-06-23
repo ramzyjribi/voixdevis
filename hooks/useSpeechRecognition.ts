@@ -1,6 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  buildSpeechTranscription,
+  mergeSpeechSegments,
+  type SpeechResultSegment,
+} from "./speechTranscript.ts";
 
 type SpeechRecognitionAlternativeLike = {
   transcript: string;
@@ -61,6 +66,9 @@ const resolveSpeechRecognition = (): SpeechRecognitionConstructor | null => {
 
 export function useSpeechRecognition() {
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const finalTranscriptRef = useRef("");
+  const interimTranscriptRef = useRef("");
+  const commitInterimOnEndRef = useRef(false);
   const [isSupported, setIsSupported] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -80,8 +88,13 @@ export function useSpeechRecognition() {
   }, []);
 
   const reset = useCallback(() => {
-    recognitionRef.current?.abort();
+    const recognition = recognitionRef.current;
+
     recognitionRef.current = null;
+    commitInterimOnEndRef.current = false;
+    finalTranscriptRef.current = "";
+    interimTranscriptRef.current = "";
+    recognition?.abort();
     setIsListening(false);
     setTranscript("");
     setInterimTranscript("");
@@ -102,34 +115,44 @@ export function useSpeechRecognition() {
       return;
     }
 
-    recognitionRef.current?.abort();
+    const previousRecognition = recognitionRef.current;
+
+    recognitionRef.current = null;
+    commitInterimOnEndRef.current = false;
+    previousRecognition?.abort();
 
     const recognition = new Recognition();
     recognition.lang = "fr-FR";
     recognition.interimResults = true;
     recognition.continuous = true;
     recognition.onresult = (event) => {
-      let finalText = "";
-      let interimText = "";
+      if (recognitionRef.current !== recognition) {
+        return;
+      }
 
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      const results: SpeechResultSegment[] = [];
+
+      for (let index = 0; index < event.results.length; index += 1) {
         const result = event.results[index];
-        const resultText = result[0]?.transcript ?? "";
 
-        if (result.isFinal) {
-          finalText += resultText;
-        } else {
-          interimText += resultText;
-        }
+        results.push({
+          isFinal: result.isFinal,
+          transcript: result[0]?.transcript ?? "",
+        });
       }
 
-      if (finalText.trim()) {
-        setTranscript((current) => `${current} ${finalText}`.trim());
-      }
+      const nextTranscript = buildSpeechTranscription(results);
 
-      setInterimTranscript(interimText.trim());
+      finalTranscriptRef.current = nextTranscript.finalText;
+      interimTranscriptRef.current = nextTranscript.interimText;
+      setTranscript(nextTranscript.finalText);
+      setInterimTranscript(nextTranscript.interimText);
     };
     recognition.onerror = (event) => {
+      if (recognitionRef.current !== recognition) {
+        return;
+      }
+
       setError(
         event.error === "not-allowed"
           ? "Acces micro refuse."
@@ -138,11 +161,34 @@ export function useSpeechRecognition() {
       setIsListening(false);
     };
     recognition.onend = () => {
+      if (recognitionRef.current !== recognition) {
+        return;
+      }
+
+      if (
+        commitInterimOnEndRef.current &&
+        interimTranscriptRef.current
+      ) {
+        const committedTranscript = mergeSpeechSegments(
+          finalTranscriptRef.current,
+          interimTranscriptRef.current,
+        );
+
+        finalTranscriptRef.current = committedTranscript;
+        setTranscript(committedTranscript);
+      }
+
+      recognitionRef.current = null;
+      commitInterimOnEndRef.current = false;
+      interimTranscriptRef.current = "";
       setIsListening(false);
       setInterimTranscript("");
     };
 
     recognitionRef.current = recognition;
+    finalTranscriptRef.current = "";
+    interimTranscriptRef.current = "";
+    commitInterimOnEndRef.current = true;
     setTranscript("");
     setInterimTranscript("");
     setError(null);
@@ -151,6 +197,8 @@ export function useSpeechRecognition() {
     try {
       recognition.start();
     } catch {
+      recognitionRef.current = null;
+      commitInterimOnEndRef.current = false;
       setIsListening(false);
       setError("Impossible de demarrer le micro.");
     }

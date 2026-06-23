@@ -1,6 +1,6 @@
 # Status - VoixDevis MVP
 
-Derniere mise a jour: 2026-06-15  
+Derniere mise a jour: 2026-06-23
 Source de planification: `docs/PLAN.md`  
 Architecture de reference: `docs/ARCHITECTURE.md`  
 Statut global: Phase 4 terminee cote implementation, Phase 5 en attente de validation utilisateur
@@ -34,6 +34,10 @@ Statut global: Phase 4 terminee cote implementation, Phase 5 en attente de valid
 - L'executor refuse les `articleId`, `templateId`, `lineItemId` et sections inconnus sans corrompre le devis; `reset_quote` reste refuse sans confirmation jusqu'a la Phase 5.
 - Les controles Phase 4 passent: `npm.cmd run test:domain`, `npm.cmd run lint`, `npm.cmd run build`.
 - Verification locale Phase 4: sans `GEMINI_API_KEY`, `POST /api/ai` retourne bien l'erreur courte `Cle Gemini manquante.`.
+- Correctif Web Speech desktop/mobile applique: les resultats cumulatifs sont dedupliques, la transcription intermediaire apparait uniquement dans le champ, et le dernier texte intermediaire est conserve si le navigateur termine la session avant de le marquer final.
+- Les controles du correctif micro passent: 18 tests, `npm.cmd run lint` et `npm.cmd run build`.
+- Le layout racine tolere les attributs ajoutes a `<html>` par les extensions navigateur comme Night Eye, sans masquer les erreurs d'hydratation des composants enfants.
+- L'adapter Gemini ne lit plus `response.text` quand la reponse contient des function calls; l'avertissement SDK sur les parties non textuelles est supprime.
 - La Phase 5 ne doit pas etre demarree sans validation utilisateur explicite.
 
 ### Prochaine action recommandee
@@ -247,7 +251,6 @@ Resultat attendu: MVP stable, testable et demonstrable.
 | UI/PDF | Totaux divergents | Reutiliser les selectors de calcul en Phase 6 |
 | Reset devis | Action destructive | Prevoir une UX claire en Phase 5 |
 | `next dev` local | Echec possible sur lockfile `.next` selon permissions Windows | Utiliser `npm.cmd run build` ou lancer `next dev` au premier plan pour verification ciblee |
-| `GEMINI_API_KEY` absente | La route IA retourne 503 au lieu d'appeler Gemini | Renseigner la variable avant une verification live Gemini |
 
 ## 6. Known Issues
 
@@ -260,10 +263,13 @@ Problemes concrets deja identifies, a surveiller pendant l'implementation.
 | La Web Speech API peut dependre du reseau/service navigateur | Transcription lente ou instable en conditions chantier | 3 | Ouvert |
 | Le navigateur integre Codex peut refuser l'acces a `127.0.0.1:3002` alors que le shell recoit HTTP 200 | Verification interactive automatisee limitee dans cette session | 3 | Ouvert |
 | Le bouton micro pouvait rester desactive apres prerendu Next car le support Web Speech etait detecte trop tot | Dictée indisponible meme dans Chrome compatible | 3 | Resolu |
+| Chrome desktop affichait deux fois la transcription intermediaire et Chrome mobile cumulait des fragments repetes | Texte du prompt duplique ou parfois perdu | 3 | Resolu |
+| L'extension Night Eye injecte `nighteye` sur `<html>` avant React | Avertissement d'hydratation en developpement | 3 | Resolu |
+| L'adapter lisait `response.text` sur une reponse Gemini composee de function calls | Avertissement SDK repetitif dans le terminal | 4 | Resolu |
 | Le reset devis est une action destructive | Perte de travail utilisateur si declenchement accidentel | 5 | Ouvert |
 | Gemini peut proposer des IDs invalides ou ambigus | Devis incoherent si validation insuffisante | 4 | Ouvert |
 | `next dev` peut echouer avec `Access is denied` lors de l'acquisition du lockfile `.next` | Verification dev server bloquee dans ce worktree | 2 | Ouvert |
-| `GEMINI_API_KEY` n'est pas renseignee dans cette session | Verification live Gemini impossible, mais erreur courte validee | 4 | Ouvert |
+| `GEMINI_API_KEY` n'etait pas renseignee pendant la validation initiale Phase 4 | Verification live Gemini alors impossible | 4 | Resolu |
 
 ## 7. Technical Debt
 
@@ -297,6 +303,9 @@ Compromis acceptes pour le MVP, non bloquants maintenant mais a suivre apres sta
 | 2026-06-15 | Phase 3 | Creation du panneau conversation, messages, composer texte, bouton micro, hook Web Speech et reponse assistant locale | Phase 3 terminee, controles `test:domain`, `lint` et `build` passes; navigateur integre bloque sur localhost | Attendre validation utilisateur pour Phase 4 |
 | 2026-06-15 | Phase 3 | Correction de la detection Web Speech apres hydratation navigateur | Bouton micro debloquable dans les navigateurs compatibles; controles `test:domain`, `lint` et `build` passes | Tester dans Chrome ou Edge sur `http://localhost:3003/` |
 | 2026-06-15 | Phase 4 | Installation `@google/genai`, creation tools Gemini, prompt builder, adapter serveur, route `/api/ai`, hook client et executor valide | Phase 4 terminee cote implementation; controles `test:domain`, `lint`, `build` passes; erreur courte sans cle Gemini validee | Attendre validation utilisateur pour Phase 5 |
+| 2026-06-23 | Correctif Phase 3 | Reconstruction des resultats Web Speech, deduplication des fragments mobiles et suppression des deux encarts de transcription intermediaire | Une seule phrase est affichee dans le champ; le dernier interim est conserve; 18 tests, lint et build passent | Tester le micro sur Chrome desktop et Android reel |
+| 2026-06-23 | Correctif UI | Ajout de `suppressHydrationWarning` sur le seul element `<html>` modifie par Night Eye | L'attribut injecte par l'extension ne declenche plus l'overlay React | Conserver les autres alertes d'hydratation actives |
+| 2026-06-23 | Correctif Phase 4 | Suppression de la lecture `response.text` en mode Function Calling | Plus d'avertissement SDK `non-text parts functionCall`; les confirmations restent produites localement | Surveiller uniquement la latence Gemini |
 
 ## 9. Comment mettre a jour ce fichier
 
