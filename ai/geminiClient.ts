@@ -14,7 +14,8 @@ import type { Quote } from "../domain/quoteTypes.ts";
 import type { AiToolCall } from "../domain/toolTypes.ts";
 import type { AiRouteResponse } from "./types.ts";
 
-const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash";
+//const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash";
+const DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite";
 
 export class GeminiConfigurationError extends Error {
   constructor(message: string) {
