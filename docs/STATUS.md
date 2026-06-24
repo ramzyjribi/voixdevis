@@ -47,6 +47,10 @@ Statut global: Phase 6 terminee, Phase 7 en attente de validation utilisateur
 - La Phase 6 est terminee: `@react-pdf/renderer` genere cote client un PDF depuis un snapshot immutable du devis, des parametres entreprise et des totaux centralises.
 - Le bouton du devis et le tool Gemini `trigger_pdf_export` utilisent le meme hook d'export et produisent un nom de fichier stable avec la date et le client.
 - Les controles Phase 6 passent: 34 tests, `npm.cmd run lint`, `npm.cmd run build`, telechargement manuel et telechargement demande via Gemini verifies dans le navigateur.
+- Amelioration post-Phase 6: les raccourcis de remise fixes sont remplaces par un champ numerique libre et un selecteur compact `% / €`, avec recalcul direct et plafond de 100 %.
+- Amelioration mobile post-Phase 6: sous le breakpoint desktop, le tableau est remplace par des articles compacts sur deux lignes, depliables pour modifier designation, quantite et prix ou supprimer la ligne.
+- Un resume mobile fixe `Total HT / TVA / Total TTC` reste visible tant que les totaux complets sont hors ecran, puis disparait automatiquement a leur entree dans le viewport.
+- Le correctif mobile est valide a 375 px sans debordement horizontal; edition, suppression, totaux reactifs, retour desktop, 34 tests, lint et build passent.
 - La Phase 7 ne doit pas etre demarree sans validation utilisateur explicite.
 
 ### Prochaine action recommandee
@@ -273,6 +277,7 @@ Problemes concrets deja identifies, a surveiller pendant l'implementation.
 | `next dev` peut echouer avec `Access is denied` lors de l'acquisition du lockfile `.next` | Verification dev server bloquee dans ce worktree | 2 | Ouvert |
 | `GEMINI_API_KEY` n'etait pas renseignee pendant la validation initiale Phase 4 | Verification live Gemini alors impossible | 4 | Resolu |
 | `npm install` signale deux vulnerabilites moderees dans l'arbre de dependances | Risque a qualifier avant livraison finale sans mise a jour forcee | 7 | Ouvert |
+| Certains `DialogContent` shadcn n'ont pas de description accessible | Avertissement navigateur et contexte incomplet pour les lecteurs d'ecran | 7 | Ouvert |
 
 ## 7. Technical Debt
 
@@ -313,6 +318,8 @@ Compromis acceptes pour le MVP, non bloquants maintenant mais a suivre apres sta
 | 2026-06-24 | Phase 5 | Ajout des choix de clarification, resolution clic/texte/voix, messages sans mutation et confirmations de reset | Phase 5 terminee; 27 tests, lint, build et parcours Gemini desktop/mobile valides | Attendre validation utilisateur pour Phase 6 |
 | 2026-06-24 | Amelioration Phase 2 | Remplacement des selects manuels par une recherche classee avec listes completes Article et Pack | Recherche accents/mots-cles/faute legere validee; 31 tests, lint, build et responsive passent | Attendre validation utilisateur pour Phase 6 |
 | 2026-06-24 | Phase 6 | Ajout du snapshot immutable, du document React PDF, du bouton et de l'export declenche par Gemini | Phase 6 terminee; 34 tests, lint, build et deux parcours de telechargement navigateur valides | Attendre validation utilisateur pour Phase 7 |
+| 2026-06-24 | Amelioration Phase 6 | Remplacement des remises predefinies par une saisie numerique avec unite `% / €` | Saisie libre, recalcul immediat, plafond 100 % et responsive sans debordement valides | Attendre validation utilisateur pour Phase 7 |
+| 2026-06-24 | Amelioration mobile Phase 6 | Remplacement du tableau mobile par des lignes compactes depliables et ajout du resume de totaux conditionnel | Portrait 375 px sans scroll horizontal; edition, suppression, disparition au footer, desktop, tests, lint et build valides | Attendre validation utilisateur pour Phase 7 |
 
 ## 9. Comment mettre a jour ce fichier
 

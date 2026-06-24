@@ -1,5 +1,6 @@
 "use client";
 
+import { MobileQuoteLineItem } from "@/components/quote/MobileQuoteLineItem";
 import { QuoteLineItemRow } from "@/components/quote/QuoteLineItemRow";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +22,7 @@ export function QuoteSection({ section }: QuoteSectionProps) {
   const deleteSection = useQuoteStore((state) => state.deleteSection);
 
   return (
-    <section className="overflow-hidden border border-zinc-200">
+    <section className="min-w-0 max-w-full overflow-hidden border border-zinc-200">
       <div className="flex min-h-12 items-center justify-between gap-3 bg-zinc-950 px-4 text-white">
         <h3 className="text-sm font-semibold">{section.name}</h3>
         <Button
@@ -37,7 +38,7 @@ export function QuoteSection({ section }: QuoteSectionProps) {
         </Button>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="hidden lg:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -58,6 +59,12 @@ export function QuoteSection({ section }: QuoteSectionProps) {
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="divide-y divide-zinc-200 lg:hidden">
+        {section.lineItems.map((lineItem) => (
+          <MobileQuoteLineItem key={lineItem.lineItemId} lineItem={lineItem} />
+        ))}
       </div>
     </section>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -20,6 +20,26 @@ type QuoteTotalsProps = {
 export function QuoteTotals({ quote, totals }: QuoteTotalsProps) {
   const setTva = useQuoteStore((state) => state.setTva);
   const applyDiscount = useQuoteStore((state) => state.applyDiscount);
+  const discountType = quote.discount?.type ?? "percent";
+  const discountValue = quote.discount?.value ?? 0;
+
+  const updateDiscountValue = (rawValue: string) => {
+    const parsedValue = Number.parseFloat(rawValue);
+    const safeValue = Number.isFinite(parsedValue) ? Math.max(0, parsedValue) : 0;
+    const value = discountType === "percent" ? Math.min(100, safeValue) : safeValue;
+
+    applyDiscount({ type: discountType, value });
+  };
+
+  const updateDiscountType = (type: string) => {
+    if (type !== "percent" && type !== "fixed") {
+      return;
+    }
+
+    const value = type === "percent" ? Math.min(100, discountValue) : discountValue;
+
+    applyDiscount({ type, value });
+  };
 
   return (
     <div className="mt-8 flex justify-end">
@@ -27,31 +47,32 @@ export function QuoteTotals({ quote, totals }: QuoteTotalsProps) {
         <TotalLine label="Sous-total HT" value={totals.subtotalHt} />
         <div className="grid grid-cols-[1fr_auto] items-center gap-3">
           <span className="text-zinc-600">Remise</span>
-          <div className="flex gap-1">
-            <Button
-              type="button"
-              variant={quote.discount?.type === "percent" ? "default" : "outline"}
-              size="xs"
-              onClick={() => applyDiscount({ type: "percent", value: 10 })}
+          <div className="flex items-center gap-1.5">
+            <Input
+              type="number"
+              inputMode="decimal"
+              min="0"
+              max={discountType === "percent" ? "100" : undefined}
+              step={discountType === "percent" ? "0.1" : "0.01"}
+              aria-label="Valeur de remise"
+              placeholder="0"
+              value={discountValue === 0 ? "" : discountValue}
+              onFocus={(event) => event.currentTarget.select()}
+              onChange={(event) => updateDiscountValue(event.currentTarget.value)}
+              className="w-20 text-right tabular-nums"
+            />
+            <Select
+              value={discountType}
+              onValueChange={updateDiscountType}
             >
-              10 %
-            </Button>
-            <Button
-              type="button"
-              variant={quote.discount?.type === "fixed" ? "default" : "outline"}
-              size="xs"
-              onClick={() => applyDiscount({ type: "fixed", value: 50 })}
-            >
-              50 €
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              onClick={() => applyDiscount({ type: "fixed", value: 0 })}
-            >
-              0
-            </Button>
+              <SelectTrigger aria-label="Type de remise" className="w-16">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="percent">%</SelectItem>
+                <SelectItem value="fixed">€</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <TotalLine label="Montant remise" value={totals.discountAmount} />
