@@ -3,7 +3,7 @@
 import { QuoteHeader } from "@/components/quote/QuoteHeader";
 import { QuoteSection } from "@/components/quote/QuoteSection";
 import { QuoteTotals } from "@/components/quote/QuoteTotals";
-import { Button } from "@/components/ui/button";
+import { ExportPdfButton } from "@/components/pdf/ExportPdfButton";
 import { Separator } from "@/components/ui/separator";
 import { calculateQuoteTotals } from "@/domain/quoteCalculations";
 import { useQuoteStore } from "@/store/useQuoteStore";
@@ -41,9 +41,7 @@ export function QuotePreview() {
         <QuoteTotals quote={quote} totals={totals} />
 
         <div className="mt-8 flex justify-end">
-          <Button type="button" variant="outline" disabled>
-            Export PDF
-          </Button>
+          <ExportPdfButton />
         </div>
       </article>
     </div>

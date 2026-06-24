@@ -16,6 +16,7 @@ import type {
   UpdateArticleArgs,
 } from "@/domain/toolTypes";
 import { aiRouteResponseSchema } from "@/domain/validation";
+import { usePdfExport } from "@/hooks/usePdfExport";
 import { getQuoteStoreSnapshot, useQuoteStore } from "@/store/useQuoteStore";
 import { useCallback, useState } from "react";
 
@@ -68,6 +69,7 @@ const extractErrorMessage = (payload: unknown): string => {
 export function useAiConversation() {
   const isSending = useQuoteStore((state) => state.isProcessing);
   const [isResetConfirmationOpen, setIsResetConfirmationOpen] = useState(false);
+  const { exportPdf } = usePdfExport();
 
   const sendMessage = useCallback(async (content: string) => {
     const message = content.trim();
@@ -123,6 +125,14 @@ export function useAiConversation() {
       if (execution.events.includes("quote_reset_requested")) {
         setIsResetConfirmationOpen(true);
       }
+
+      if (execution.events.includes("pdf_export_requested")) {
+        const exportSucceeded = await exportPdf();
+
+        if (!exportSucceeded) {
+          getQuoteStoreSnapshot().addAssistantMessage("Export PDF impossible.");
+        }
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Erreur IA temporaire.";
@@ -130,7 +140,7 @@ export function useAiConversation() {
     } finally {
       getQuoteStoreSnapshot().setProcessing(false);
     }
-  }, []);
+  }, [exportPdf]);
 
   const confirmReset = useCallback(() => {
     const store = getQuoteStoreSnapshot();

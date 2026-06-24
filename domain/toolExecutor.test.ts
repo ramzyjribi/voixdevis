@@ -279,3 +279,17 @@ test("delete_section removes every line in the target section", () => {
   assert.deepEqual(result.appliedToolNames, ["delete_section"]);
   assert.equal(harness.quote.sections.length, 0);
 });
+
+test("trigger_pdf_export emits a UI event without mutating the quote", () => {
+  const harness = createExecutorHarness();
+  harness.context.addArticle({ articleId: "ART_MIT_EVIER_STD" });
+  const quoteBefore = structuredClone(harness.quote);
+  const result = executeAiToolCalls(
+    [{ name: "trigger_pdf_export", args: {} }],
+    harness.context,
+  );
+
+  assert.deepEqual(harness.quote, quoteBefore);
+  assert.deepEqual(result.events, ["pdf_export_requested"]);
+  assert.deepEqual(result.appliedToolNames, ["trigger_pdf_export"]);
+});

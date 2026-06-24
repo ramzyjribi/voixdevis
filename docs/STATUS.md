@@ -3,7 +3,7 @@
 Derniere mise a jour: 2026-06-24
 Source de planification: `docs/PLAN.md`  
 Architecture de reference: `docs/ARCHITECTURE.md`  
-Statut global: Phase 5 terminee, Phase 6 en attente de validation utilisateur
+Statut global: Phase 6 terminee, Phase 7 en attente de validation utilisateur
 
 ## 1. Reprise rapide
 
@@ -44,18 +44,14 @@ Statut global: Phase 5 terminee, Phase 6 en attente de validation utilisateur
 - La Phase 5 est terminee: les clarifications affichent des candidats catalogue tactiles, le clic ajoute localement l'article choisi et une reponse texte/voix conserve le contexte de clarification pour Gemini.
 - `answer_question` et `unknown_action` restent sans mutation; `reset_quote` et le bouton Nouveau devis demandent une confirmation avant de vider le travail courant.
 - Les controles Phase 5 passent: 27 tests, `npm.cmd run lint`, `npm.cmd run build`, parcours Gemini reel desktop et verification responsive mobile sans debordement.
-- La Phase 6 ne doit pas etre demarree sans validation utilisateur explicite.
+- La Phase 6 est terminee: `@react-pdf/renderer` genere cote client un PDF depuis un snapshot immutable du devis, des parametres entreprise et des totaux centralises.
+- Le bouton du devis et le tool Gemini `trigger_pdf_export` utilisent le meme hook d'export et produisent un nom de fichier stable avec la date et le client.
+- Les controles Phase 6 passent: 34 tests, `npm.cmd run lint`, `npm.cmd run build`, telechargement manuel et telechargement demande via Gemini verifies dans le navigateur.
+- La Phase 7 ne doit pas etre demarree sans validation utilisateur explicite.
 
 ### Prochaine action recommandee
 
-Attendre la validation utilisateur avant de demarrer la Phase 6 de `docs/PLAN.md`.
-
-Si validation recue:
-
-1. Installer `@react-pdf/renderer`.
-2. Creer le snapshot PDF immutable et `QuotePdfDocument`.
-3. Brancher l'export manuel puis le tool `trigger_pdf_export`.
-4. Verifier que les totaux PDF et UI restent identiques.
+Attendre la validation utilisateur avant de demarrer la Phase 7 de `docs/PLAN.md`.
 
 
 ### Commandes de controle utiles
@@ -78,8 +74,8 @@ npm run test:domain
 | 3 | Conversation texte et dictee assistee | Terminee | 100% | Rien | Aucune |
 | 4 | Gemini Function Calling | Terminee | 100% | Rien | Aucune |
 | 5 | Clarifications et edge cases metier | Terminee | 100% | Rien | Aucune |
-| 6 | Export PDF | Non demarree | 0% | Validation utilisateur | Attendre validation avant d'ajouter `@react-pdf/renderer` et le document PDF |
-| 7 | Durcissement, QA et polish MVP | Non demarree | 0% | Phases 0 a 6 | Ajouter tests et verifier lint/build |
+| 6 | Export PDF | Terminee | 100% | Rien | Aucune |
+| 7 | Durcissement, QA et polish MVP | Non demarree | 0% | Validation utilisateur | Attendre validation avant de demarrer le durcissement MVP |
 
 Legende:
 
@@ -198,18 +194,18 @@ Resultat attendu: le flux conversationnel gere les ambiguites et les commandes l
 
 ### Phase 6 - Export PDF
 
-Statut: Non demarree
+Statut: Terminee
 
-- [ ] Installer `@react-pdf/renderer`.
-- [ ] Creer le snapshot PDF immutable.
-- [ ] Creer `components/pdf/QuotePdfDocument.tsx`.
-- [ ] Creer `components/pdf/ExportPdfButton.tsx`.
-- [ ] Creer `hooks/usePdfExport.ts`.
-- [ ] Brancher le bouton export.
-- [ ] Brancher le tool `trigger_pdf_export`.
-- [ ] Verifier coherence UI/PDF sur les totaux.
-- [ ] Tester export avec sections, ligne custom, template, remise et TVA.
-- [ ] Valider les criteres d'acceptation de la Phase 6 dans `docs/PLAN.md`.
+- [x] Installer `@react-pdf/renderer`.
+- [x] Creer le snapshot PDF immutable.
+- [x] Creer `components/pdf/QuotePdfDocument.tsx`.
+- [x] Creer `components/pdf/ExportPdfButton.tsx`.
+- [x] Creer `hooks/usePdfExport.ts`.
+- [x] Brancher le bouton export.
+- [x] Brancher le tool `trigger_pdf_export`.
+- [x] Verifier coherence UI/PDF sur les totaux.
+- [x] Tester export avec sections, ligne custom, template, remise et TVA.
+- [x] Valider les criteres d'acceptation de la Phase 6 dans `docs/PLAN.md`.
 
 Resultat attendu: devis professionnel exportable en PDF.
 
@@ -255,7 +251,6 @@ Resultat attendu: MVP stable, testable et demonstrable.
 | Gemini SDK | API susceptible d'evoluer | Verifier la doc officielle en Phase 4 |
 | Web Speech API | Support navigateur variable | Fallback texte obligatoire en Phase 3 |
 | LocalStorage | Donnees corrompues ou schema ancien | Versionner la persistence en Phase 1 |
-| UI/PDF | Totaux divergents | Reutiliser les selectors de calcul en Phase 6 |
 | `next dev` local | Echec possible sur lockfile `.next` selon permissions Windows | Utiliser `npm.cmd run build` ou lancer `next dev` au premier plan pour verification ciblee |
 
 ## 6. Known Issues
@@ -277,6 +272,7 @@ Problemes concrets deja identifies, a surveiller pendant l'implementation.
 | Gemini peut proposer des IDs invalides ou ambigus | Devis incoherent si validation insuffisante | 4 | Resolu |
 | `next dev` peut echouer avec `Access is denied` lors de l'acquisition du lockfile `.next` | Verification dev server bloquee dans ce worktree | 2 | Ouvert |
 | `GEMINI_API_KEY` n'etait pas renseignee pendant la validation initiale Phase 4 | Verification live Gemini alors impossible | 4 | Resolu |
+| `npm install` signale deux vulnerabilites moderees dans l'arbre de dependances | Risque a qualifier avant livraison finale sans mise a jour forcee | 7 | Ouvert |
 
 ## 7. Technical Debt
 
@@ -316,6 +312,7 @@ Compromis acceptes pour le MVP, non bloquants maintenant mais a suivre apres sta
 | 2026-06-24 | Documentation | Realignement de la Phase 5 avec l'executor livre en Phase 4 | `delete_section` est marque acquis; seul son test de non-regression reste a couvrir en Phase 5 | Attendre la validation utilisateur avant de demarrer Phase 5 |
 | 2026-06-24 | Phase 5 | Ajout des choix de clarification, resolution clic/texte/voix, messages sans mutation et confirmations de reset | Phase 5 terminee; 27 tests, lint, build et parcours Gemini desktop/mobile valides | Attendre validation utilisateur pour Phase 6 |
 | 2026-06-24 | Amelioration Phase 2 | Remplacement des selects manuels par une recherche classee avec listes completes Article et Pack | Recherche accents/mots-cles/faute legere validee; 31 tests, lint, build et responsive passent | Attendre validation utilisateur pour Phase 6 |
+| 2026-06-24 | Phase 6 | Ajout du snapshot immutable, du document React PDF, du bouton et de l'export declenche par Gemini | Phase 6 terminee; 34 tests, lint, build et deux parcours de telechargement navigateur valides | Attendre validation utilisateur pour Phase 7 |
 
 ## 9. Comment mettre a jour ce fichier
 
@@ -353,7 +350,7 @@ Statuts autorises pour les phases:
 
 Reprendre ici:
 
-- Phase: 6 - Export PDF
+- Phase: 7 - Durcissement, QA et polish MVP
 - Statut: Non demarree, en attente de validation utilisateur
-- Premiere action: apres validation explicite, relire la Phase 6 et installer `@react-pdf/renderer`
+- Premiere action: apres validation explicite, relire la Phase 7 et installer la pile de tests prevue
 - Fichier de reference principal: `docs/PLAN.md`

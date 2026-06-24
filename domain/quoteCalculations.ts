@@ -1,7 +1,9 @@
 import { clampToZero, roundMoney } from "../lib/money.ts";
 import type { Discount, Quote, QuoteLineItem, QuoteTotals } from "./quoteTypes.ts";
 
-export const calculateLineTotalHt = (lineItem: QuoteLineItem): number =>
+export const calculateLineTotalHt = (
+  lineItem: Pick<QuoteLineItem, "quantity" | "unitPriceHt">,
+): number =>
   roundMoney(lineItem.quantity * lineItem.unitPriceHt);
 
 export const calculateSubtotalHt = (quote: Quote): number =>
